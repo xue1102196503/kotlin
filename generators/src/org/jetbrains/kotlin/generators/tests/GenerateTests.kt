@@ -107,8 +107,6 @@ import org.jetbrains.kotlin.idea.intentions.declarations.AbstractJoinLinesTest
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocHighlightingTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocTypingTest
-import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenInspectionTest
-import org.jetbrains.kotlin.idea.maven.configuration.AbstractMavenConfigureProjectByChangingFileTest
 import org.jetbrains.kotlin.idea.navigation.*
 import org.jetbrains.kotlin.idea.parameterInfo.AbstractParameterInfoTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
@@ -714,23 +712,26 @@ fun main(args: Array<String>) {
         }
     }
 
+    /*
+    // Maven and Gradle are not relevant for AS branch
+
     testGroup("idea/idea-maven/test", "idea/idea-maven/testData") {
         testClass<AbstractMavenConfigureProjectByChangingFileTest> {
             model("configurator/jvm", extension = null, recursive = false, testMethod = "doTestWithMaven")
             model("configurator/js", extension = null, recursive = false, testMethod = "doTestWithJSMaven")
         }
-
         testClass<AbstractKotlinMavenInspectionTest> {
             model("maven-inspections", pattern = "^([\\w\\-]+).xml$", singleClass = true)
         }
     }
-
     testGroup("idea/idea-gradle/tests", "idea/testData") {
         testClass<AbstractGradleConfigureProjectByChangingFileTest> {
-            model("configuration/gradle", extension = null, recursive = false, testMethod = "doTestGradle")
-            model("configuration/gsk", extension = null, recursive = false, testMethod = "doTestGradle")
+            model("configuration/gradle", pattern = """(\w+)_before\.gradle$""", testMethod = "doTestGradle")
+            model("configuration/gsk", pattern = """(\w+)_before\.gradle.kts$""", testMethod = "doTestGradle")
         }
     }
+
+    */
 
     testGroup("idea/tests", "compiler/testData") {
         testClass<AbstractResolveByStubTest> {
@@ -856,7 +857,7 @@ fun main(args: Array<String>) {
             model("fileOrElement", extension = "java")
         }
     }
-
+/*
     testGroup("jps-plugin/jps-tests/test", "jps-plugin/testData") {
         testClass<AbstractIncrementalJpsTest> {
             model("incremental/multiModule", extension = null, excludeParentDirs = true)
@@ -920,7 +921,7 @@ fun main(args: Array<String>) {
             model("incremental/classHierarchyAffected", extension = null, recursive = false)
         }
     }
-
+*/
     testGroup("plugins/plugins-tests/tests",  "plugins/android-extensions/android-extensions-compiler/testData") {
         testClass<AbstractAndroidSyntheticPropertyDescriptorTest> {
             model("descriptors", recursive = false, extension = null)
