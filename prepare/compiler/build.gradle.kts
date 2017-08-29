@@ -109,7 +109,7 @@ val proguard by task<ProGuardTask> {
         System.setProperty("kotlin-compiler-jar", outputJar.canonicalPath)
     }
 
-    libraryjars(proguardLibraryJars)
+    libraryjars(mapOf("filter" to "!META-INF/versions/**"), proguardLibraryJars)
     printconfiguration("$buildDir/compiler.pro.dump")
 }
 

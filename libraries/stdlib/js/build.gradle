@@ -53,6 +53,9 @@ sourceSets {
     }
 }
 
+// Temporary hack to avoid HTTP error 409 on com.android.tools.build:gradle:3.0.0-alpha1
+project.repositories.removeIf { it instanceof MavenArtifactRepository && it.url.toString().contains("jfrog") }
+
 configurations {
     merger
 }

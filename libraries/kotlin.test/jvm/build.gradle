@@ -1,10 +1,13 @@
-
 description = 'Kotlin Test'
 
 apply plugin: 'kotlin-platform-jvm'
 
 configureJvm6Project(project)
 configurePublishing(project)
+
+sourceSets {
+    java9
+}
 
 dependencies {
     expectedBy project(':kotlin-test:kotlin-test-common')
@@ -16,8 +19,11 @@ dependencies {
 
 archivesBaseName = 'kotlin-test'
 
+createJava9ModuleInfoTask(project, "compileJava9ModuleInfo", "kotlin.test")
+
 jar {
-    manifestAttributes(manifest, project, 'Test')
+    manifestAttributes(manifest, project, 'Test', true)
+    from compileJava9ModuleInfo.outputs
 }
 
 artifacts {

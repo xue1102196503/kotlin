@@ -1,8 +1,7 @@
-
 buildscript {
     val buildSrcKotlinVersion: String by extra(findProperty("buildSrc.kotlin.version")?.toString() ?: embeddedKotlinVersion)
     val buildSrcKotlinRepo: String? by extra(findProperty("buildSrc.kotlin.repo") as String?)
-    extra["versions.shadow"] = "2.0.1"
+    extra["versions.shadow"] = "2.0.2-SNAPSHOT"
 
     repositories {
         buildSrcKotlinRepo?.let {
@@ -36,6 +35,7 @@ repositories {
     maven(url = "https://dl.bintray.com/kotlin/kotlin-dev") // for dex-method-list
 //    maven { setUrl("https://repo.gradle.org/gradle/libs-releases-local") }
     jcenter()
+    maven(url = "http://oss.jfrog.org/artifactory/simple/oss-snapshot-local/") // for Shadow
 }
 
 dependencies {

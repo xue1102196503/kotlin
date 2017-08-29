@@ -15,7 +15,9 @@ buildscript {
             bootstrapKotlinRepo,
             "https://jcenter.bintray.com/",
             "https://plugins.gradle.org/m2",
-            "http://repository.jetbrains.com/utils/")
+            "http://repository.jetbrains.com/utils/",
+            "http://oss.jfrog.org/artifactory/simple/oss-snapshot-local/" // for Shadow
+    )
 
     extra["repos"] = repos
 

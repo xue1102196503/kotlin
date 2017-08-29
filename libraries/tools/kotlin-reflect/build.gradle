@@ -29,6 +29,7 @@ sourceSets {
             srcDir "${core}/reflection.jvm/src"
         }
     }
+    java9
 }
 
 configurations {
@@ -68,6 +69,8 @@ compileJava {
     // options.compilerArgs.addAll(["-Xlint:unchecked"])
 }
 
+createJava9ModuleInfoTask(project, "compileJava9ModuleInfo", "kotlin.reflect", [configurations.shadows])
+
 compileKotlin {
     dependsOn copyAnnotations
     dependsOn ':custom-dependencies:protobuf-lite:prepare'
@@ -84,11 +87,14 @@ kotlin.experimental.coroutines "enable"
 
 
 task reflectShadowJar(type: ShadowJar) {
+    dependsOn compileJava9ModuleInfo
+
     classifier = 'shadow'
     version = null
     manifestAttributes(manifest, project, 'Main')
 
     from(sourceSets.main.output)
+    from(compileJava9ModuleInfo.outputs)
     from(project(":core:descriptors.jvm").sourceSets.main.resources) {
         include 'META-INF/services/**'
     }
@@ -113,22 +119,33 @@ task stripMetadata {
     }
 }
 
-def mainArchiveName = "${archivesBaseName}-${project.version}.jar"
-def outputJarPath = "${libsDir}/${mainArchiveName}"
+def proguardOutput = "${libsDir}/${archivesBaseName}-proguard.jar"
+
 def rtJar = ['jre/lib/rt.jar', '../Classes/classes.jar'].collect { new File(JDK_16, it) }.find { it.isFile() }
 
 task proguard(type: proguard.gradle.ProGuardTask) {
     dependsOn stripMetadata
     inputs.files(stripMetadata.outputs.files)
-    outputs.file(outputJarPath)
+    outputs.file(proguardOutput)
 
-    injars stripMetadata.outputs.files
-    outjars outputJarPath
+    injars stripMetadata.outputs.files, filter: "!META-INF/versions/**"
+    outjars proguardOutput
 
-    libraryjars configurations.proguardDeps
+    libraryjars configurations.proguardDeps, filter: "!META-INF/versions/**"
     libraryjars rtJar
 
     configuration "${core}/reflection.jvm/reflection.pro"
+}
+
+task result(type: Jar) {
+    dependsOn proguard
+
+    from zipTree(file(proguardOutput))
+    from (zipTree(reflectShadowJar.archivePath)) {
+        include 'META-INF/versions/**'
+    }
+
+    manifestAttributes(manifest, project, 'Main', true)
 }
 
 
@@ -167,7 +184,7 @@ task relocatedSourcesJar(type: Jar) {
     from "${core}/reflection.jvm/src"
 }
 
-def artifactJar = [file: file(outputJarPath), builtBy: proguard, name: archivesBaseName]
+def artifactJar = [file: result.outputs.files.first(), builtBy: result, name: archivesBaseName]
 
 task dexMethodCount(type: DexMethodCount) {
     dependsOn(artifactJar.builtBy)
@@ -185,6 +202,6 @@ artifacts {
 }
 
 dist {
-    from(proguard)
+    from(result)
     from(relocatedSourcesJar)
 }
