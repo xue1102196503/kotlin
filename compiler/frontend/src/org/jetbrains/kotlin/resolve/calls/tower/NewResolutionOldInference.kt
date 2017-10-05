@@ -188,6 +188,8 @@ class NewResolutionOldInference(
             }
         }
 
+        candidates = ResolvedCallCompatReplacer.replace(syntheticScopes, candidates)
+
         val overloadResults = convertToOverloadResults<D>(candidates, tracing, context, languageVersionSettings)
         coroutineInferenceSupport.checkCoroutineCalls(context, tracing, overloadResults)
         return overloadResults
