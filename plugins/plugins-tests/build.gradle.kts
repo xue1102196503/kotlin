@@ -33,6 +33,7 @@ dependencies {
     testRuntime(ideaPluginDeps("*.jar", plugin = "gradle"))
     testRuntime(ideaPluginDeps("*.jar", plugin = "android"))
     testRuntime(preloadedDeps("dx", subdir = "android-5.0/lib"))
+    testRuntime(ideaPluginDeps("*.jar", plugin = "smali"))
 }
 
 sourceSets {
