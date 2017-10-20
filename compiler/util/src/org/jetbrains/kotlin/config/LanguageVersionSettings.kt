@@ -82,6 +82,8 @@ enum class LanguageFeature(
 
     MultiPlatformProjects(sinceVersion = null, defaultState = State.DISABLED),
 
+    NewInference(sinceVersion = KOTLIN_1_2, defaultState = State.DISABLED),
+
     ;
 
     val presentableName: String
