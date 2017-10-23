@@ -138,6 +138,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         arguments.languageVersion = configuration?.getChild("languageVersion")?.text ?: mavenProject.properties["kotlin.compiler.languageVersion"]?.toString()
         arguments.multiPlatform = configuration?.getChild("multiPlatform")?.text?.trim()?.toBoolean() ?: false
         arguments.suppressWarnings = configuration?.getChild("nowarn")?.text?.trim()?.toBoolean() ?: false
+        arguments.newInference = configuration?.getChild("newInference")?.text?.trim()?.toBoolean() ?: false
 
         configuration?.getChild("experimentalCoroutines")?.text?.trim()?.let {
             arguments.coroutinesState = it
