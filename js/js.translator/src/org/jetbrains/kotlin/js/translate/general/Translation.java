@@ -41,15 +41,9 @@ import org.jetbrains.kotlin.js.translate.declaration.FileDeclarationVisitor;
 import org.jetbrains.kotlin.js.translate.expression.ExpressionVisitor;
 import org.jetbrains.kotlin.js.translate.expression.PatternTranslator;
 import org.jetbrains.kotlin.js.translate.test.JSTestGenerator;
-import org.jetbrains.kotlin.js.translate.utils.AnnotationsUtils;
-import org.jetbrains.kotlin.js.translate.utils.BindingUtils;
-import org.jetbrains.kotlin.js.translate.utils.JsAstUtils;
-import org.jetbrains.kotlin.js.translate.utils.TranslationUtils;
+import org.jetbrains.kotlin.js.translate.utils.*;
 import org.jetbrains.kotlin.js.translate.utils.mutator.AssignToExpressionMutator;
-import org.jetbrains.kotlin.psi.KtDeclaration;
-import org.jetbrains.kotlin.psi.KtExpression;
-import org.jetbrains.kotlin.psi.KtFile;
-import org.jetbrains.kotlin.psi.KtUnaryExpression;
+import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.resolve.BindingTrace;
 import org.jetbrains.kotlin.resolve.bindingContextUtil.BindingContextUtilsKt;
 import org.jetbrains.kotlin.resolve.constants.CompileTimeConstant;
@@ -99,14 +93,39 @@ public final class Translation {
         }
 
         CompileTimeConstant<?> compileTimeValue = ConstantExpressionEvaluator.getConstant(expression, context.bindingContext());
-        if (compileTimeValue != null) {
+        if (compileTimeValue != null && !compileTimeValue.getUsesNonConstValAsConstant()) {
             KotlinType type = context.bindingContext().getType(expression);
             if (type != null) {
-                if ((KotlinBuiltIns.isLong(type) && !compileTimeValue.getUsesNonConstValAsConstant()) ||
-                    (KotlinBuiltIns.isInt(type) && expression instanceof KtUnaryExpression))
-                {
-                    JsExpression constantResult = translateConstant(compileTimeValue, expression, context);
-                    if (constantResult != null) return constantResult.source(expression);
+                JsExpression constantResult = translateConstant(compileTimeValue, expression, context);
+                if (constantResult != null) {
+                    constantResult.setSource(expression);
+
+                    if (KotlinBuiltIns.isLong(type)) {
+
+                        KtReferenceExpression referenceExpression;
+                        if (expression instanceof KtReferenceExpression) {
+                            referenceExpression = (KtReferenceExpression) expression;
+                        }
+                        else if (expression instanceof KtQualifiedExpression) {
+                            referenceExpression = PsiUtils.getNotNullSimpleNameSelector((KtQualifiedExpression) expression);
+                        }
+                        else {
+                            return constantResult;
+                        }
+
+                        DeclarationDescriptor descriptor =
+                                BindingUtils.getDescriptorForReferenceExpression(context.bindingContext(), referenceExpression);
+
+                        if (descriptor != null) {
+                            JsName name = context.declareConstantValue(descriptor, constantResult);
+                            return name.makeRef();
+                        }
+                        else {
+                            return constantResult;
+                        }
+                    }
+
+                    return constantResult;
                 }
             }
         }

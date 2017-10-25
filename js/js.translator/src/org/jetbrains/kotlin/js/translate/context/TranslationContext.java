@@ -890,6 +890,24 @@ public class TranslationContext {
     }
 
     @NotNull
+    public JsName declareConstantValue(@NotNull DeclarationDescriptor descriptor, @NotNull JsExpression value) {
+        String tag = Objects.requireNonNull(staticContext.getTag(descriptor));
+        String suggestedName = StaticContext.getSuggestedName(descriptor);
+
+        if (inlineFunctionContext == null || !isPublicInlineFunction()) {
+            return staticContext.importDeclaration(suggestedName, tag, value);
+        }
+        else {
+            return inlineFunctionContext.getImports().computeIfAbsent(tag, t -> {
+                JsName result = JsScope.declareTemporaryName(suggestedName);
+                MetadataProperties.setImported(result, true);
+                inlineFunctionContext.getImportBlock().getStatements().add(JsAstUtils.newVar(result, value));
+                return result;
+            });
+        }
+    }
+
+    @NotNull
     public JsName getNameForSpecialFunction(@NotNull SpecialFunction function) {
         if (inlineFunctionContext == null || !isPublicInlineFunction()) {
             return staticContext.getNameForSpecialFunction(function);
