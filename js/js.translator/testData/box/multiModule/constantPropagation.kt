@@ -105,6 +105,26 @@ fun testIntMaxMinValue() {
     assertEquals(-2147483648, minusIntMinValue)
 }
 
+// PROPERTY_READ_COUNT: name=longConst count=1 scope=testImportedLongConstInlineFunLib1
+inline fun testImportedLongConstInlineFunLib1() {
+    val longConstCopy = longConst
+    assertEquals(42L, longConstCopy)
+
+    val minusLongConst = -longConst
+    assertEquals(-42L, minusLongConst)
+
+    val minusLongConstParenthesized = -(longConst)
+    assertEquals(-42L, minusLongConstParenthesized)
+
+    val twiceLongConst = 2 * longConst
+    assertEquals(84L, twiceLongConst)
+}
+
+// PROPERTY_READ_COUNT: name=longConst_0 count=1 scope=testImportedLongConstInlinedLocally
+private fun testImportedLongConstInlinedLocally() {
+    testImportedLongConstInlineFunLib1()
+}
+
 fun testLib1() {
     testLongVal()
     testLongConst()
@@ -113,6 +133,8 @@ fun testLib1() {
     testIntVal()
     testIntConst()
     testIntMaxMinValue()
+
+    testImportedLongConstInlinedLocally()
 }
 
 // MODULE: lib2(lib1)
@@ -157,11 +179,16 @@ fun testImportedLongConstInlinedLocally() {
     testImportedLongConstInlineFun()
 }
 
+// PROPERTY_READ_COUNT: name=longConst_1 count=1 scope=testImportedLongConstInlinedLocallyFromOtherModule
+private fun testImportedLongConstInlinedLocallyFromOtherModule() {
+    testImportedLongConstInlineFunLib1()
+}
+
 fun testLib2() {
     testLib1()
 
     testImportedLongConst()
-    testImportedLongConstInlinedLocally()
+    testImportedLongConstInlinedLocallyFromOtherModule()
 }
 
 // MODULE: main(lib2)

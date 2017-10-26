@@ -117,8 +117,7 @@ public final class Translation {
                                 BindingUtils.getDescriptorForReferenceExpression(context.bindingContext(), referenceExpression);
 
                         if (descriptor != null) {
-                            JsName name = context.declareConstantValue(descriptor, constantResult);
-                            return name.makeRef();
+                            return context.declareConstantValue(descriptor, constantResult);
                         }
                         else {
                             return constantResult;
