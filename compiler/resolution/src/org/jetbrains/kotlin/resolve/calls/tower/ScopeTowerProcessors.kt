@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.scopes.receivers.DetailedReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.QualifierReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValueWithSmartCastInfo
+import java.util.*
 
 
 class KnownResultProcessor<out C>(
@@ -36,7 +37,7 @@ class KnownResultProcessor<out C>(
 class PrioritizedCompositeScopeTowerProcessor<out C>(
         vararg val processors: ScopeTowerProcessor<C>
 ) : ScopeTowerProcessor<C> {
-    override fun process(data: TowerData): List<Collection<C>> = processors.flatMap { it.process(data) }
+    override fun process(data: TowerData): List<Collection<C>> = processors.flatMapTo(ArrayList(5)) { it.process(data) }
 
     override fun recordLookups(skippedData: Collection<TowerData>, name: Name) {
         processors.forEach { it.recordLookups(skippedData, name) }

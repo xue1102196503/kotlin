@@ -48,16 +48,16 @@ interface SyntheticScopes {
 
 
 fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation)
-        = scopes.flatMap { it.getSyntheticExtensionProperties(receiverTypes, name, location) }
+        = scopes.flatMapTo(ArrayList(3)) { it.getSyntheticExtensionProperties(receiverTypes, name, location) }
 
 fun SyntheticScopes.collectSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation)
-        = scopes.flatMap { it.getSyntheticMemberFunctions(receiverTypes, name, location) }
+        = scopes.flatMapTo(ArrayList(3)) { it.getSyntheticMemberFunctions(receiverTypes, name, location) }
 
 fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation)
-        = scopes.flatMap { it.getSyntheticStaticFunctions(scope, name, location) }
+        = scopes.flatMapTo(ArrayList(3)) { it.getSyntheticStaticFunctions(scope, name, location) }
 
 fun SyntheticScopes.collectSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation)
-        = scopes.flatMap { it.getSyntheticConstructors(scope, name, location) }
+        = scopes.flatMapTo(ArrayList(3)) { it.getSyntheticConstructors(scope, name, location) }
 
 fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>)
         = scopes.flatMap { it.getSyntheticExtensionProperties(receiverTypes) }
