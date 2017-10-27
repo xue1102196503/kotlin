@@ -6622,6 +6622,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 doTest(fileName);
             }
 
+            @TestMetadata("intercepted.kt")
+            public void testIntercepted() throws Exception {
+                String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/coroutines/intrinsicSemantics/intercepted.kt");
+                doTest(fileName);
+            }
+
             @TestMetadata("startCoroutine.kt")
             public void testStartCoroutine() throws Exception {
                 String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/coroutines/intrinsicSemantics/startCoroutine.kt");
@@ -6637,6 +6643,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("startCoroutineUninterceptedOrReturnInterception.kt")
             public void testStartCoroutineUninterceptedOrReturnInterception() throws Exception {
                 String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/coroutines/intrinsicSemantics/startCoroutineUninterceptedOrReturnInterception.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("suspendCoroutineUninterceptedOrReturn.kt")
+            public void testSuspendCoroutineUninterceptedOrReturn() throws Exception {
+                String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/coroutines/intrinsicSemantics/suspendCoroutineUninterceptedOrReturn.kt");
                 doTest(fileName);
             }
         }
