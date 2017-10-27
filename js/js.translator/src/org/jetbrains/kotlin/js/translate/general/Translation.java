@@ -116,12 +116,7 @@ public final class Translation {
                         DeclarationDescriptor descriptor =
                                 BindingUtils.getDescriptorForReferenceExpression(context.bindingContext(), referenceExpression);
 
-                        if (descriptor != null) {
-                            return context.declareConstantValue(descriptor, constantResult);
-                        }
-                        else {
-                            return constantResult;
-                        }
+                        return descriptor == null ? constantResult : context.declareConstantValue(descriptor, constantResult);
                     }
 
                     return constantResult;
