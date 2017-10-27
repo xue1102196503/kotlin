@@ -35,8 +35,11 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.DetailedReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.QualifierReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValueWithSmartCastInfo
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.UnwrappedType
 import org.jetbrains.kotlin.types.expressions.CoercionStrategy
+import org.jetbrains.kotlin.types.lowerIfFlexible
 import org.jetbrains.kotlin.types.typeUtil.immediateSupertypes
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.utils.SmartList
@@ -270,7 +273,7 @@ class CallableReferencesCandidateFactory(
         val descriptorReturnType = descriptor.returnType
                                    ?: ErrorUtils.createErrorType("Error return type for descriptor: $descriptor")
 
-        when (descriptor) {
+        return when (descriptor) {
             is PropertyDescriptor -> {
                 val mutable = descriptor.isVar && run {
                     val setter = descriptor.setter
@@ -278,8 +281,9 @@ class CallableReferencesCandidateFactory(
                                                              scopeTower.lexicalScope.ownerDescriptor)
                 }
 
-                return callComponents.reflectionTypes.getKPropertyType(Annotations.EMPTY, argumentsAndReceivers, descriptorReturnType, mutable) to 0
+                callComponents.reflectionTypes.getKPropertyType(Annotations.EMPTY, argumentsAndReceivers, descriptorReturnType, mutable) to 0
             }
+
             is FunctionDescriptor -> {
                 val returnType: KotlinType
                 val defaults: Int
@@ -299,9 +303,12 @@ class CallableReferencesCandidateFactory(
                     returnType = if (coercion == CoercionStrategy.COERCION_TO_UNIT) descriptor.builtIns.unitType else descriptorReturnType
                 }
 
-                return callComponents.reflectionTypes.getKFunctionType(Annotations.EMPTY, null, argumentsAndReceivers, null,
+                callComponents.reflectionTypes.getKFunctionType(Annotations.EMPTY, null, argumentsAndReceivers, null,
                                                                        returnType, descriptor.builtIns) to defaults
             }
+
+            is VariableDescriptor -> Pair(ErrorUtils.createErrorType("reference to variable"), 0)
+
             else -> error("Unsupported descriptor type: $descriptor")
         }
     }
