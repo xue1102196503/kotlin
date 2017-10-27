@@ -105,7 +105,10 @@ fun testIntMaxMinValue() {
     assertEquals(-2147483648, minusIntMinValue)
 }
 
+const val bigLongConst = 123456789012345L
+
 // PROPERTY_READ_COUNT: name=longConst count=1 scope=testImportedLongConstInlineFunLib1
+// PROPERTY_READ_COUNT: name=bigLongConst count=1 scope=testImportedLongConstInlineFunLib1
 inline fun testImportedLongConstInlineFunLib1() {
     val longConstCopy = longConst
     assertEquals(42L, longConstCopy)
@@ -118,9 +121,13 @@ inline fun testImportedLongConstInlineFunLib1() {
 
     val twiceLongConst = 2 * longConst
     assertEquals(84L, twiceLongConst)
+
+    val bigLongConstCopy = bigLongConst
+    assertEquals(123456789012345L, bigLongConstCopy)
 }
 
 // PROPERTY_READ_COUNT: name=longConst_0 count=1 scope=testImportedLongConstInlinedLocally
+// PROPERTY_READ_COUNT: name=bigLongConst_0 count=1 scope=testImportedLongConstInlinedLocally
 private fun testImportedLongConstInlinedLocally() {
     testImportedLongConstInlineFunLib1()
 }
@@ -145,6 +152,7 @@ package foo
 // PROPERTY_NOT_READ_FROM: $module$lib1.foo.longConst
 
 // PROPERTY_READ_COUNT: name=longConst count=1 scope=testImportedLongConst
+// PROPERTY_READ_COUNT: name=bigLongConst count=1 scope=testImportedLongConst
 fun testImportedLongConst() {
     val longConstCopy = longConst
     assertEquals(42L, longConstCopy)
@@ -157,9 +165,13 @@ fun testImportedLongConst() {
 
     val twiceLongConst = 2 * longConst
     assertEquals(84L, twiceLongConst)
+
+    val bigLongConstCopy = bigLongConst
+    assertEquals(123456789012345L, bigLongConstCopy)
 }
 
 // PROPERTY_READ_COUNT: name=longConst count=1 scope=testImportedLongConstInlineFun
+// PROPERTY_READ_COUNT: name=bigLongConst count=1 scope=testImportedLongConstInlineFun
 inline fun testImportedLongConstInlineFun() {
     val longConstCopy = longConst
     assertEquals(42L, longConstCopy)
@@ -172,14 +184,19 @@ inline fun testImportedLongConstInlineFun() {
 
     val twiceLongConst = 2 * longConst
     assertEquals(84L, twiceLongConst)
+
+    val bigLongConstCopy = bigLongConst
+    assertEquals(123456789012345L, bigLongConstCopy)
 }
 
-// PROPERTY_READ_COUNT: name=longConst_0 count=1 scope=testImportedLongConstInlinedLocally
+// PROPERTY_READ_COUNT: name=longConst count=1 scope=testImportedLongConstInlinedLocally
+// PROPERTY_READ_COUNT: name=bigLongConst count=1 scope=testImportedLongConstInlinedLocally
 fun testImportedLongConstInlinedLocally() {
     testImportedLongConstInlineFun()
 }
 
-// PROPERTY_READ_COUNT: name=longConst_1 count=1 scope=testImportedLongConstInlinedLocallyFromOtherModule
+// PROPERTY_READ_COUNT: name=longConst count=1 scope=testImportedLongConstInlinedLocallyFromOtherModule
+// PROPERTY_READ_COUNT: name=bigLongConst count=1 scope=testImportedLongConstInlinedLocallyFromOtherModule
 private fun testImportedLongConstInlinedLocallyFromOtherModule() {
     testImportedLongConstInlineFunLib1()
 }
