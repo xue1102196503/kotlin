@@ -398,6 +398,8 @@ class PSICallResolver(
         val externalLambdaArguments = oldCall.functionLiteralArguments
         val resolvedArgumentsInParenthesis = resolveArgumentsInParenthesis(context, argumentsInParenthesis)
 
+        checkIsMixingNamedAndPositionedArguments(resolvedArgumentsInParenthesis, context)
+
         val externalArgument = if (oldCall.callType == Call.CallType.ARRAY_SET_METHOD) {
             assert(externalLambdaArguments.isEmpty()) {
                 "Unexpected lambda parameters for call $oldCall"
@@ -428,6 +430,17 @@ class PSICallResolver(
 
         return PSIKotlinCallImpl(kotlinCallKind, oldCall, tracingStrategy, resolvedExplicitReceiver, name, resolvedTypeArguments, resolvedArgumentsInParenthesis,
                                  astExternalArgument, context.dataFlowInfo, resultDataFlowInfo, context.dataFlowInfoForArguments)
+    }
+
+    private fun checkIsMixingNamedAndPositionedArguments(arguments: List<KotlinCallArgument>, context: BasicCallResolutionContext) {
+        var afterNamed = false
+        for (argument in arguments) {
+            val isPositional = argument.argumentName == null
+            if (isPositional && afterNamed) {
+                context.trace.report(Errors.MIXING_NAMED_AND_POSITIONED_ARGUMENTS.on(argument.psiCallArgument.valueArgument.asElement()))
+            }
+            afterNamed = afterNamed || !isPositional
+        }
     }
 
     private fun resolveExplicitReceiver(context: BasicCallResolutionContext, oldReceiver: Receiver?, isSafeCall: Boolean): ReceiverKotlinCallArgument? =
