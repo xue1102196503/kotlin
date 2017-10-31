@@ -153,21 +153,16 @@ private fun translateFunctionCall(
     }
 
     if (resolvedCall.resultingDescriptor.isSuspend) {
-        if (context.isInStateMachine) {
-            context.currentBlock.statements += JsAstUtils.asSyntheticStatement(callExpression.apply {
-                isSuspend = true
-                source = resolvedCall.call.callElement
-            })
-            val coroutineRef = TranslationUtils.translateContinuationArgument(context).apply { source = resolvedCall.call.callElement }
-            return context.defineTemporary(JsNameRef("\$\$coroutineResult\$\$", coroutineRef).apply {
-                sideEffects = SideEffectKind.DEPENDS_ON_STATE
-                source = resolvedCall.call.callElement
-                coroutineResult = true
-            })
-        }
-        else {
-            callExpression.isTailCallSuspend = true
-        }
+        context.currentBlock.statements += JsAstUtils.asSyntheticStatement(callExpression.apply {
+            isSuspend = true
+            source = resolvedCall.call.callElement
+        })
+        val coroutineRef = TranslationUtils.translateContinuationArgument(context).apply { source = resolvedCall.call.callElement }
+        return context.defineTemporary(JsNameRef("\$\$coroutineResult\$\$", coroutineRef).apply {
+            sideEffects = SideEffectKind.DEPENDS_ON_STATE
+            source = resolvedCall.call.callElement
+            coroutineResult = true
+        })
     }
 
     callExpression.type = resolvedCall.getReturnType().let { if (resolvedCall.call.isSafeCall()) it.makeNullable() else it }
@@ -200,9 +195,6 @@ private val longRangeToFqName = FqName("kotlin.Long.rangeTo")
 private val untilFqName = FqName("kotlin.ranges.until")
 
 fun ResolvedCall<out CallableDescriptor>.getReturnType(): KotlinType = TranslationUtils.getReturnTypeForCoercion(resultingDescriptor)
-
-private val TranslationContext.isInStateMachine
-    get() = (declarationDescriptor as? FunctionDescriptor)?.requiresStateMachineTransformation(this) == true
 
 fun computeExplicitReceiversForInvoke(
         context: TranslationContext,
