@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.resolve.calls.model
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.resolve.calls.components.KotlinResolutionCallbacks
 import org.jetbrains.kotlin.resolve.calls.components.TypeArgumentsToParametersMapper
 import org.jetbrains.kotlin.resolve.calls.inference.NewConstraintSystem
 import org.jetbrains.kotlin.resolve.calls.inference.components.FreshVariableNewTypeSubstitutor
@@ -62,6 +63,7 @@ fun KotlinDiagnosticsHolder.addDiagnosticIfNotNull(diagnostic: KotlinCallDiagnos
  */
 class KotlinResolutionCandidate(
         val callComponents: KotlinCallComponents,
+        val resolutionCallbacks: KotlinResolutionCallbacks,
         val scopeTower: ImplicitScopeTower,
         private val baseSystem: ConstraintStorage,
         val resolvedCall: MutableResolvedCallAtom,

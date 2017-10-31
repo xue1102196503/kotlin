@@ -39,6 +39,8 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.createLookupLocation
 import org.jetbrains.kotlin.resolve.calls.callUtil.getCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.resolve.calls.callUtil.isSafeCall
+import org.jetbrains.kotlin.resolve.calls.checkers.AdditionalTypeChecker
+import org.jetbrains.kotlin.resolve.calls.components.KotlinResolutionCallbacks
 import org.jetbrains.kotlin.resolve.calls.context.BasicCallResolutionContext
 import org.jetbrains.kotlin.resolve.calls.context.ContextDependency
 import org.jetbrains.kotlin.resolve.calls.inference.buildResultingSubstitutor
@@ -73,7 +75,8 @@ class PSICallResolver(
         private val kotlinToResolvedCallTransformer: KotlinToResolvedCallTransformer,
         private val kotlinCallResolver: KotlinCallResolver,
         private val typeApproximator: TypeApproximator,
-        private val argumentTypeResolver: ArgumentTypeResolver
+        private val argumentTypeResolver: ArgumentTypeResolver,
+        private val additionalTypeCheckers: Iterable<AdditionalTypeChecker>
 ) {
     private val GIVEN_CANDIDATES_NAME = Name.special("<given candidates>")
 
@@ -90,7 +93,7 @@ class PSICallResolver(
         val scopeTower = ASTScopeTower(context)
         val resolutionCallbacks = createResolutionCallbacks(context)
 
-        val factoryProviderForInvoke = FactoryProviderForInvoke(context, scopeTower, kotlinCall)
+        val factoryProviderForInvoke = FactoryProviderForInvoke(context, scopeTower, kotlinCall, resolutionCallbacks)
 
         val expectedType = calculateExpectedType(context)
         var result = kotlinCallResolver.resolveCall(
@@ -143,7 +146,7 @@ class PSICallResolver(
     ): CallResolutionResult {
         val deprecatedName = OperatorConventions.REM_TO_MOD_OPERATION_NAMES[remOperatorName]!!
         val callWithDeprecatedName = toKotlinCall(context, resolutionKind.kotlinCallKind, context.call, deprecatedName, tracingStrategy)
-        val refinedProviderForInvokeFactory = FactoryProviderForInvoke(context, scopeTower, callWithDeprecatedName)
+        val refinedProviderForInvokeFactory = FactoryProviderForInvoke(context, scopeTower, callWithDeprecatedName, resolutionCallbacks)
         return kotlinCallResolver.resolveCall(scopeTower, resolutionCallbacks, callWithDeprecatedName, expectedType,
                                               refinedProviderForInvokeFactory, context.collectAllCandidates)
     }
@@ -155,7 +158,8 @@ class PSICallResolver(
 
     private fun createResolutionCallbacks(context: BasicCallResolutionContext) =
             KotlinResolutionCallbacksImpl(context, expressionTypingServices, typeApproximator,
-                                          argumentTypeResolver, languageVersionSettings, kotlinToResolvedCallTransformer)
+                                          argumentTypeResolver, languageVersionSettings, kotlinToResolvedCallTransformer,
+                                          additionalTypeCheckers)
 
     private fun calculateExpectedType(context: BasicCallResolutionContext): UnwrappedType? {
         val expectedType = context.expectedType.unwrap()
@@ -298,7 +302,8 @@ class PSICallResolver(
     private inner class FactoryProviderForInvoke(
             val context: BasicCallResolutionContext,
             val scopeTower: ImplicitScopeTower,
-            val kotlinCall: PSIKotlinCallImpl
+            val kotlinCall: PSIKotlinCallImpl,
+            val resolutionCallbacks: KotlinResolutionCallbacks
     ) : CandidateFactoryProviderForInvoke<KotlinResolutionCandidate> {
 
         init {
@@ -313,7 +318,7 @@ class PSICallResolver(
         override fun factoryForVariable(stripExplicitReceiver: Boolean): CandidateFactory<KotlinResolutionCandidate> {
             val explicitReceiver = if (stripExplicitReceiver) null else kotlinCall.explicitReceiver
             val variableCall = PSIKotlinCallForVariable(kotlinCall, explicitReceiver, kotlinCall.name)
-            return SimpleCandidateFactory(callComponents, scopeTower, variableCall)
+            return SimpleCandidateFactory(callComponents, resolutionCallbacks, scopeTower, variableCall)
         }
 
         override fun factoryForInvoke(variable: KotlinResolutionCandidate, useExplicitReceiver: Boolean):
@@ -334,7 +339,7 @@ class PSICallResolver(
                 PSIKotlinCallForInvoke(kotlinCall, variable, variableCallArgument, null)
             }
 
-            return variableCallArgument.receiver to SimpleCandidateFactory(callComponents, scopeTower, callForInvoke)
+            return variableCallArgument.receiver to SimpleCandidateFactory(callComponents, resolutionCallbacks, scopeTower, callForInvoke)
         }
 
         // todo: create special check that there is no invoke on variable

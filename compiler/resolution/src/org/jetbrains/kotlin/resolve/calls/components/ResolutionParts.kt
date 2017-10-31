@@ -230,8 +230,13 @@ private fun KotlinResolutionCandidate.resolveKotlinArgument(
     addResolvedKtPrimitive(resolveKtPrimitive(csBuilder, argument, expectedType, this, isReceiver))
 }
 
-internal object CheckReceivers : ResolutionPart() {
-    private fun KotlinResolutionCandidate.checkReceiver(
+internal abstract class ReceiverResolutionPart : ResolutionPart() {
+    abstract fun KotlinResolutionCandidate.checkReceiver(
+            receiverArgument: SimpleKotlinCallArgument,
+            receiverParameter: ReceiverParameterDescriptor
+    )
+
+    private fun KotlinResolutionCandidate.checkReceiverArgument(
             receiverArgument: SimpleKotlinCallArgument?,
             receiverParameter: ReceiverParameterDescriptor?
     ) {
@@ -240,18 +245,40 @@ internal object CheckReceivers : ResolutionPart() {
         }
         if (receiverArgument == null || receiverParameter == null) return
 
-        resolveKotlinArgument(receiverArgument, receiverParameter, isReceiver = true)
+        checkReceiver(receiverArgument, receiverParameter)
     }
 
     override fun KotlinResolutionCandidate.process(workIndex: Int) {
         if (workIndex == 0) {
-            checkReceiver(resolvedCall.dispatchReceiverArgument, candidateDescriptor.dispatchReceiverParameter)
+            checkReceiverArgument(resolvedCall.dispatchReceiverArgument, candidateDescriptor.dispatchReceiverParameter)
         } else {
-            checkReceiver(resolvedCall.extensionReceiverArgument, candidateDescriptor.extensionReceiverParameter)
+            checkReceiverArgument(resolvedCall.extensionReceiverArgument, candidateDescriptor.extensionReceiverParameter)
         }
     }
 
     override fun KotlinResolutionCandidate.workCount() = 2
+}
+
+internal object ResolveReceiverArgumentPart : ReceiverResolutionPart() {
+    override fun KotlinResolutionCandidate.checkReceiver(
+            receiverArgument: SimpleKotlinCallArgument,
+            receiverParameter: ReceiverParameterDescriptor
+    ) {
+        resolveKotlinArgument(receiverArgument, receiverParameter, isReceiver = true)
+    }
+}
+
+internal object ReceiverAdditionalTypeCheckPart : ReceiverResolutionPart() {
+    override fun KotlinResolutionCandidate.checkReceiver(
+            receiverArgument: SimpleKotlinCallArgument,
+            receiverParameter: ReceiverParameterDescriptor
+    ) {
+        resolutionCallbacks.checkReceiverType(
+                receiverParameter,
+                receiverArgument.receiver.receiverValue,
+                receiverArgument.isSafeCall
+        )
+    }
 }
 
 internal object CheckArguments : ResolutionPart() {

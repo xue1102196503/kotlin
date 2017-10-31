@@ -18,8 +18,10 @@ package org.jetbrains.kotlin.resolve.calls.components
 
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.calls.tower.ImplicitScopeTower
+import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.UnwrappedType
 
 // stateless component
@@ -45,4 +47,6 @@ interface KotlinResolutionCallbacks {
     ): List<SimpleKotlinCallArgument>
 
     fun bindStubResolvedCallForCandidate(candidate: ResolvedCallAtom)
+
+    fun checkReceiverType(receiverParameter: ReceiverParameterDescriptor, receiverArgument: ReceiverValue, safeAccess: Boolean)
 }

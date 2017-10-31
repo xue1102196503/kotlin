@@ -45,6 +45,7 @@ class KotlinCallComponents(
 
 class SimpleCandidateFactory(
         val callComponents: KotlinCallComponents,
+        val resolutionCallbacks: KotlinResolutionCallbacks,
         val scopeTower: ImplicitScopeTower,
         val kotlinCall: KotlinCall
 ): CandidateFactory<KotlinResolutionCandidate> {
@@ -115,10 +116,12 @@ class SimpleCandidateFactory(
                                                      dispatchArgumentReceiver, extensionArgumentReceiver)
 
         if (ErrorUtils.isError(descriptor)) {
-            return KotlinResolutionCandidate(callComponents, scopeTower, baseSystem, resolvedKtCall, knownSubstitutor, listOf(ErrorDescriptorResolutionPart))
+            return KotlinResolutionCandidate(callComponents, resolutionCallbacks,
+                                             scopeTower, baseSystem, resolvedKtCall,
+                                             knownSubstitutor, listOf(ErrorDescriptorResolutionPart))
         }
 
-        val candidate = KotlinResolutionCandidate(callComponents, scopeTower, baseSystem, resolvedKtCall, knownSubstitutor)
+        val candidate = KotlinResolutionCandidate(callComponents, resolutionCallbacks, scopeTower, baseSystem, resolvedKtCall, knownSubstitutor)
 
         initialDiagnostics.forEach(candidate::addDiagnostic)
 
@@ -167,7 +170,8 @@ enum class KotlinCallKind(vararg resolutionPart: ResolutionPart) {
             NoArguments,
             CreateFreshVariablesSubstitutor,
             CheckExplicitReceiverKindConsistency,
-            CheckReceivers
+            ResolveReceiverArgumentPart,
+            ReceiverAdditionalTypeCheckPart
     ),
     FUNCTION(
             CheckInstantiationOfAbstractClass,
@@ -179,7 +183,8 @@ enum class KotlinCallKind(vararg resolutionPart: ResolutionPart) {
             ArgumentsToCandidateParameterDescriptor,
             CreateFreshVariablesSubstitutor,
             CheckExplicitReceiverKindConsistency,
-            CheckReceivers,
+            ResolveReceiverArgumentPart,
+            ReceiverAdditionalTypeCheckPart,
             CheckArguments,
             CheckExternalArgument,
             CheckSpreadArgumentToNonVarargParameter
