@@ -31,7 +31,7 @@ data class PlatformSourceFile(
 fun Sequence<MemberTemplate>.groupByFileAndWrite(
         fileNameBuilder: (PlatformSourceFile) -> File
 ) {
-    val groupedMembers = map { it.instantiate() }.flatten().groupBy {
+    val groupedMembers = map { it.instantiate(Platform.values - Platform.Native) }.flatten().groupBy {
         PlatformSourceFile(it.platform, it.sourceFile)
     }
 
@@ -78,11 +78,12 @@ fun List<MemberBuilder>.writeTo(file: File, platformSource: PlatformSourceFile) 
     }
 }
 
+
 fun main(args: Array<String>) {
-    val fns = sequenceOf(f_copyOf, f_sort_range, f_downTo, f_plusElementOperator)
-            .onEach {
-                it.builder { sequenceClassification(SequenceClass.intermediate) }
-            }
+    val fns =
+            listOf(Arrays, templateGroupOf(f_downTo))
+                    .asSequence()
+                    .flatMap { it.invoke() }
 
 
     fns.groupByFileAndWrite { (platform, source) ->
