@@ -125,8 +125,13 @@ private fun preprocessCallableReference(
         csBuilder: ConstraintSystemBuilder,
         argument: CallableReferenceKotlinCallArgument,
         expectedType: UnwrappedType?,
-        diagnosticsHolder: KotlinDiagnosticsHolder
+        diagnosticsHolder: KotlinDiagnosticsHolder,
+        forceResolution: Boolean = false
 ): ResolvedAtom {
+    if (expectedType != null && !forceResolution && csBuilder.isTypeVariable(expectedType)) {
+        return CallableReferenceWithTypeVariableAsExpectedTypeAtom(argument, expectedType, diagnosticsHolder)
+    }
+
     val result = ResolvedCallableReferenceAtom(argument, expectedType)
     if (expectedType == null) return result
 
@@ -135,6 +140,18 @@ private fun preprocessCallableReference(
         diagnosticsHolder.addDiagnostic(NotCallableExpectedType(argument, expectedType, notCallableTypeConstructor))
     }
     return result
+}
+
+fun CallableReferenceWithTypeVariableAsExpectedTypeAtom.transformToResolvedCallableReference(
+        csBuilder: ConstraintSystemBuilder
+): ResolvedCallableReferenceAtom {
+    val fixedExpectedType = csBuilder.buildCurrentSubstitutor().safeSubstitute(expectedType)
+    val resolvedCallableReference =
+            preprocessCallableReference(csBuilder, atom, fixedExpectedType, diagnosticsHolder, forceResolution = true) as ResolvedCallableReferenceAtom
+
+    setAnalyzed(resolvedCallableReference)
+
+    return resolvedCallableReference
 }
 
 private fun preprocessCollectionLiteralArgument(

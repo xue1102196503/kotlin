@@ -118,6 +118,19 @@ class ResolvedLambdaAtom(
     override val outputType: UnwrappedType get() = returnType
 }
 
+class CallableReferenceWithTypeVariableAsExpectedTypeAtom(
+        override val atom: CallableReferenceKotlinCallArgument,
+        val expectedType: UnwrappedType,
+        val diagnosticsHolder: KotlinDiagnosticsHolder
+) : PostponedResolvedAtom() {
+    override val inputTypes: Collection<UnwrappedType> get() = listOf(expectedType)
+    override val outputType: UnwrappedType? get() = null
+
+    fun setAnalyzed(resolvedCallableReferenceAtom: ResolvedCallableReferenceAtom) {
+        setAnalyzedResults(listOf(resolvedCallableReferenceAtom), listOf())
+    }
+}
+
 class ResolvedCallableReferenceAtom(
         override val atom: CallableReferenceKotlinCallArgument,
         val expectedType: UnwrappedType?
