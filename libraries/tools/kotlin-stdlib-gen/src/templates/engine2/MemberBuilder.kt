@@ -96,6 +96,8 @@ class MemberBuilder(
     fun customReceiver(value: String) = receiver(value)
     fun signature(value: String) { signature = value }
     fun returns(type: String) { returns = type }
+    @Deprecated("Use specialFor", ReplaceWith("specialFor(*fs) { returns(run(valueBuilder)) }"))
+    fun returns(vararg fs: Family, valueBuilder: () -> String) = specialFor(*fs) { returns(run(valueBuilder)) }
 
     fun typeParam(typeParameterName: String) {
         typeParams += typeParameterName
@@ -112,6 +114,9 @@ class MemberBuilder(
     fun doc(valueBuilder: DocExtensions.() -> String) {
         doc = valueBuilder(DocExtensions)
     }
+
+    @Deprecated("Use specialFor", ReplaceWith("specialFor(*fs) { doc(valueBuilder) }"))
+    fun doc(vararg fs: Family, valueBuilder: DocExtensions.() -> String) = specialFor(*fs) { doc(valueBuilder) }
 
     fun body(valueBuilder: () -> String) {
         body = valueBuilder()
