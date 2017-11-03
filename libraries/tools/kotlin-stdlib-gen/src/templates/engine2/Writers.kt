@@ -102,6 +102,7 @@ fun List<MemberBuilder>.writeTo(file: File, platformSource: PlatformSourceFile) 
 fun main(args: Array<String>) {
     val templateGroups = sequenceOf(
             Elements,
+            Filtering,
             Aggregates,
             Arrays,
             templateGroupOf(f_downTo)
