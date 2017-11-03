@@ -32,13 +32,9 @@ import org.jetbrains.kotlin.context.ContextForNewModule
 import org.jetbrains.kotlin.context.ModuleContext
 import org.jetbrains.kotlin.context.MutableModuleContext
 import org.jetbrains.kotlin.context.ProjectContext
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
-import org.jetbrains.kotlin.descriptors.PackagePartProvider
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.impl.ModuleDependenciesImpl
-import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 import org.jetbrains.kotlin.frontend.java.di.createContainerForTopDownAnalyzerForJvm
 import org.jetbrains.kotlin.frontend.java.di.initJvmBuiltInsForTopDownAnalysis
 import org.jetbrains.kotlin.frontend.java.di.initialize
@@ -46,6 +42,7 @@ import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.javac.components.JavacBasedClassFinder
 import org.jetbrains.kotlin.javac.components.JavacBasedSourceElementFactory
 import org.jetbrains.kotlin.javac.components.StubJavaResolverCache
+import org.jetbrains.kotlin.load.java.JavaClassesTracker
 import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolver
 import org.jetbrains.kotlin.load.java.structure.JavaClass
 import org.jetbrains.kotlin.load.java.structure.impl.VirtualFileBoundJavaClass
@@ -88,6 +85,11 @@ object TopDownAnalyzerFacadeForJVM {
 
         val module = container.get<ModuleDescriptor>()
         val moduleContext = container.get<ModuleContext>()
+
+        for (classId in container.get<JavaClassesTracker>().getAdditionalClassesToReport()) {
+            // Just force the lookup
+            module.findClassAcrossModuleDependencies(classId)
+        }
 
         val analysisHandlerExtensions = AnalysisHandlerExtension.getInstances(project)
 
@@ -196,7 +198,8 @@ object TopDownAnalyzerFacadeForJVM {
         // TODO: get rid of duplicate invocation of CodeAnalyzerInitializer#initialize, or refactor CliLightClassGenerationSupport
         val container = createContainerForTopDownAnalyzerForJvm(
                 moduleContext, trace, declarationProviderFactory(storageManager, files), sourceScope, lookupTracker,
-                partProvider, moduleClassResolver, jvmTarget, languageVersionSettings, configureJavaClassFinder
+                partProvider, moduleClassResolver, jvmTarget, languageVersionSettings, configureJavaClassFinder,
+                javaClassTracker = configuration[JVMConfigurationKeys.JAVA_CLASSES_TRACKER]
         ).apply {
             initJvmBuiltInsForTopDownAnalysis()
             (partProvider as? IncrementalPackagePartProvider)?.deserializationConfiguration = get<DeserializationConfiguration>()
