@@ -75,6 +75,9 @@ Kotlin.coroutineController = function(qualifier) {
 Kotlin.coroutineReceiver = function(qualifier) {
 };
 
+Kotlin.setCoroutineReceiver = function(qualifier, value) {
+};
+
 Kotlin.getFunctionById = function(id, defaultValue) {
     return function() {
         return defaultValue;

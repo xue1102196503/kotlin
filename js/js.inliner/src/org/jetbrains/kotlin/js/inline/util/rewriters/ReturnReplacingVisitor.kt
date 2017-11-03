@@ -17,7 +17,11 @@
 package org.jetbrains.kotlin.js.inline.util.rewriters
 
 import org.jetbrains.kotlin.js.backend.ast.*
-import org.jetbrains.kotlin.js.backend.ast.metadata.*
+import org.jetbrains.kotlin.js.backend.ast.metadata.coroutineResult
+import org.jetbrains.kotlin.js.backend.ast.metadata.functionDescriptor
+import org.jetbrains.kotlin.js.backend.ast.metadata.returnTarget
+import org.jetbrains.kotlin.js.backend.ast.metadata.synthetic
+import org.jetbrains.kotlin.js.coroutine.isStateMachineResult
 import org.jetbrains.kotlin.js.translate.context.Namer
 import org.jetbrains.kotlin.js.translate.utils.JsAstUtils
 
@@ -67,7 +71,7 @@ class ReturnReplacingVisitor(
     }
 
     private fun processCoroutineResult(expression: JsExpression?): JsExpression? {
-        if (!isSuspend) return expression
+        if (!isSuspend || expression.isStateMachineResult()) return expression
         val lhs = JsNameRef("\$\$coroutineResult\$\$", JsAstUtils.stateMachineReceiver()).apply { coroutineResult = true }
         return JsAstUtils.assignment(lhs, expression ?: Namer.getUndefinedExpression())
     }
