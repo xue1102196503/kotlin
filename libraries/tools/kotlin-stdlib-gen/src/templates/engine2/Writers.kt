@@ -28,12 +28,32 @@ data class PlatformSourceFile(
         val sourceFile: SourceFile
 )
 
+private val platformsToGenerate = Platform.values - Platform.Native
+
+@JvmName("groupByFileAndWriteGroups")
+fun Sequence<TemplateGroup>.groupByFileAndWrite(
+        fileNameBuilder: (PlatformSourceFile) -> File
+) {
+    flatMap { group ->
+        group.invoke()
+                .flatMap { it.instantiate(platformsToGenerate) }
+                .sortedBy { it.signature }
+    }.groupByFileAndWrite(fileNameBuilder)
+}
+
+@JvmName("groupByFileAndWriteTemplates")
 fun Sequence<MemberTemplate>.groupByFileAndWrite(
         fileNameBuilder: (PlatformSourceFile) -> File
 ) {
-    val groupedMembers = map { it.instantiate(Platform.values - Platform.Native) }.flatten().groupBy {
-        PlatformSourceFile(it.platform, it.sourceFile)
-    }
+    flatMap { it.instantiate(platformsToGenerate) }
+        .groupByFileAndWrite(fileNameBuilder)
+}
+
+@JvmName("groupByFileAndWriteMembers")
+fun Sequence<MemberBuilder>.groupByFileAndWrite(
+        fileNameBuilder: (PlatformSourceFile) -> File
+) {
+    val groupedMembers = groupBy { PlatformSourceFile(it.platform, it.sourceFile) }
 
     for ((psf, members) in groupedMembers) {
         val file = fileNameBuilder(psf)
@@ -80,13 +100,31 @@ fun List<MemberBuilder>.writeTo(file: File, platformSource: PlatformSourceFile) 
 
 
 fun main(args: Array<String>) {
-    val fns =
-            listOf(Arrays, templateGroupOf(f_downTo))
-                    .asSequence()
-                    .flatMap { it.invoke() }
+    val templateGroups = sequenceOf(
+            Arrays,
+            templateGroupOf(f_downTo)
+    )
+
+//  Expected order:
+//                    ::elements,
+//                    ::filtering,
+//                    ::ordering,
+//                    ::arrays,
+//                    ::snapshots,
+//                    ::mapping,
+//                    ::sets,
+//                    ::aggregates,
+//                    ::guards,
+//                    ::generators,
+//                    ::strings,
+//                    ::sequences,
+//                    ::ranges,
+//                    ::numeric,
+//                    ::comparables,
+//                    CommonArrays::templates
 
 
-    fns.groupByFileAndWrite { (platform, source) ->
+    templateGroups.groupByFileAndWrite { (platform, source) ->
         File("build/out/$platform/$source.kt")
     }
 }
