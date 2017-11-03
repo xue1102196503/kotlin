@@ -42,10 +42,8 @@ class PostponedArgumentsAnalyzer(
     fun analyze(c: Context, resolutionCallbacks: KotlinResolutionCallbacks, argument: ResolvedAtom) {
         when (argument) {
             is ResolvedLambdaAtom -> analyzeLambda(c, resolutionCallbacks, argument)
-            is LambdaWithTypeVariableAsExpectedTypeAtom -> analyzeLambda(c, resolutionCallbacks, argument.transformToResolvedLambda(c.getBuilder()))
-            is CallableReferenceWithTypeVariableAsExpectedTypeAtom ->
-                callableReferenceResolver.processCallableReferenceArgument(c.getBuilder(), argument.transformToResolvedCallableReference(c.getBuilder()))
             is ResolvedCallableReferenceAtom -> callableReferenceResolver.processCallableReferenceArgument(c.getBuilder(), argument)
+            is PostponedAtomWithTypeVariableAsExpectedType -> analyze(c, resolutionCallbacks, argument.transformToResolvedAtom(c.getBuilder()))
             is ResolvedCollectionLiteralAtom -> TODO("Not supported")
             else -> error("Unexpected resolved primitive: ${argument.javaClass.canonicalName}")
         }

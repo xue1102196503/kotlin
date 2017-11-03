@@ -112,15 +112,6 @@ private fun extractLambdaParameters(expectedType: UnwrappedType, argument: Lambd
     }
 }
 
-fun LambdaWithTypeVariableAsExpectedTypeAtom.transformToResolvedLambda(csBuilder: ConstraintSystemBuilder): ResolvedLambdaAtom {
-    val fixedExpectedType = csBuilder.buildCurrentSubstitutor().safeSubstitute(expectedType)
-    val resolvedLambdaAtom = preprocessLambdaArgument(csBuilder, atom, fixedExpectedType, forceResolution = true) as ResolvedLambdaAtom
-
-    setAnalyzed(resolvedLambdaAtom)
-
-    return resolvedLambdaAtom
-}
-
 private fun preprocessCallableReference(
         csBuilder: ConstraintSystemBuilder,
         argument: CallableReferenceKotlinCallArgument,
@@ -142,16 +133,19 @@ private fun preprocessCallableReference(
     return result
 }
 
-fun CallableReferenceWithTypeVariableAsExpectedTypeAtom.transformToResolvedCallableReference(
-        csBuilder: ConstraintSystemBuilder
-): ResolvedCallableReferenceAtom {
+fun PostponedAtomWithTypeVariableAsExpectedType.transformToResolvedAtom(csBuilder: ConstraintSystemBuilder): ResolvedAtom {
     val fixedExpectedType = csBuilder.buildCurrentSubstitutor().safeSubstitute(expectedType)
-    val resolvedCallableReference =
-            preprocessCallableReference(csBuilder, atom, fixedExpectedType, diagnosticsHolder, forceResolution = true) as ResolvedCallableReferenceAtom
+    val resolvedAtom = when (this) {
+        is LambdaWithTypeVariableAsExpectedTypeAtom ->
+            preprocessLambdaArgument(csBuilder, atom, fixedExpectedType, forceResolution = true)
 
-    setAnalyzed(resolvedCallableReference)
+        is CallableReferenceWithTypeVariableAsExpectedTypeAtom ->
+            preprocessCallableReference(csBuilder, atom, fixedExpectedType, diagnosticsHolder, forceResolution = true)
+    }
 
-    return resolvedCallableReference
+    setAnalyzed(resolvedAtom)
+
+    return resolvedAtom
 }
 
 private fun preprocessCollectionLiteralArgument(

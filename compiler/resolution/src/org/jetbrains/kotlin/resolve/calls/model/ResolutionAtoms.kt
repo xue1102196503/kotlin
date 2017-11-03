@@ -82,17 +82,21 @@ sealed class PostponedResolvedAtom : ResolvedAtom() {
     abstract val outputType: UnwrappedType?
 }
 
-class LambdaWithTypeVariableAsExpectedTypeAtom(
-        override val atom: LambdaKotlinCallArgument,
-        val expectedType: UnwrappedType
-) : PostponedResolvedAtom() {
+sealed class PostponedAtomWithTypeVariableAsExpectedType : PostponedResolvedAtom() {
+    abstract val expectedType: UnwrappedType
+
+    fun setAnalyzed(resolvedAtom: ResolvedAtom) {
+        setAnalyzedResults(listOf(resolvedAtom), listOf())
+    }
+
     override val inputTypes: Collection<UnwrappedType> get() = listOf(expectedType)
     override val outputType: UnwrappedType? get() = null
-
-    fun setAnalyzed(resolvedLambdaAtom: ResolvedLambdaAtom) {
-        setAnalyzedResults(listOf(resolvedLambdaAtom), listOf())
-    }
 }
+
+class LambdaWithTypeVariableAsExpectedTypeAtom(
+        override val atom: LambdaKotlinCallArgument,
+        override val expectedType: UnwrappedType
+) : PostponedAtomWithTypeVariableAsExpectedType()
 
 class ResolvedLambdaAtom(
         override val atom: LambdaKotlinCallArgument,
@@ -120,16 +124,9 @@ class ResolvedLambdaAtom(
 
 class CallableReferenceWithTypeVariableAsExpectedTypeAtom(
         override val atom: CallableReferenceKotlinCallArgument,
-        val expectedType: UnwrappedType,
+        override val expectedType: UnwrappedType,
         val diagnosticsHolder: KotlinDiagnosticsHolder
-) : PostponedResolvedAtom() {
-    override val inputTypes: Collection<UnwrappedType> get() = listOf(expectedType)
-    override val outputType: UnwrappedType? get() = null
-
-    fun setAnalyzed(resolvedCallableReferenceAtom: ResolvedCallableReferenceAtom) {
-        setAnalyzedResults(listOf(resolvedCallableReferenceAtom), listOf())
-    }
-}
+) : PostponedAtomWithTypeVariableAsExpectedType()
 
 class ResolvedCallableReferenceAtom(
         override val atom: CallableReferenceKotlinCallArgument,

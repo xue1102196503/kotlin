@@ -63,8 +63,7 @@ class KotlinConstraintSystemCompleter(
 
             if (shouldForceCallableReferenceOrLambdaResolution(completionMode, variableForFixation)) {
                 if (forcePostponedAtomResolution<ResolvedCallableReferenceAtom>(topLevelPrimitive, analyze)) continue
-                if (forcePostponedAtomResolution<CallableReferenceWithTypeVariableAsExpectedTypeAtom>(topLevelPrimitive, analyze)) continue
-                if (forcePostponedAtomResolution<LambdaWithTypeVariableAsExpectedTypeAtom>(topLevelPrimitive, analyze)) continue
+                if (forcePostponedAtomResolution<PostponedAtomWithTypeVariableAsExpectedType>(topLevelPrimitive, analyze)) continue
             }
 
             if (variableForFixation != null) {
