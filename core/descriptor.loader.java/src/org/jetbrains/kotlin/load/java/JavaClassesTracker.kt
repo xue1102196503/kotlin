@@ -23,8 +23,11 @@ interface JavaClassesTracker {
     fun reportClass(classDescriptor: JavaClassDescriptor)
     fun getAdditionalClassesToReport(): Collection<ClassId>
 
+    fun onCompletedAnalysis()
+
     object Default : JavaClassesTracker {
         override fun reportClass(classDescriptor: JavaClassDescriptor) {}
         override fun getAdditionalClassesToReport(): Collection<ClassId> = emptyList()
+        override fun onCompletedAnalysis() {}
     }
 }
