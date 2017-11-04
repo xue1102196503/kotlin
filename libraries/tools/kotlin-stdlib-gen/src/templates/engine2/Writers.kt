@@ -104,6 +104,7 @@ fun main(args: Array<String>) {
             Elements,
             Filtering,
             Aggregates,
+            Generators,
             Arrays,
             templateGroupOf(f_downTo)
     )
