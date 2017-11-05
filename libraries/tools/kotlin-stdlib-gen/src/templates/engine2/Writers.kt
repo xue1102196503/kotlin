@@ -105,7 +105,11 @@ fun main(args: Array<String>) {
             Filtering,
             Ordering,
             Aggregates,
+            Guards,
             Generators,
+            StringJoinOps,
+            SequenceOps,
+            Numeric,
             Arrays,
             templateGroupOf(f_downTo)
     )
