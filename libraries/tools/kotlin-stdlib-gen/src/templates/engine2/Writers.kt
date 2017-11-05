@@ -103,6 +103,7 @@ fun main(args: Array<String>) {
     val templateGroups = sequenceOf(
             Elements,
             Filtering,
+            Ordering,
             Aggregates,
             Generators,
             Arrays,
