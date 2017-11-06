@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !DIAGNOSTICS: -UNUSED_PARAMETER -UNUSED_VARIABLE
 
 fun println() {}
@@ -22,30 +23,30 @@ fun testResultOfAnonFun1() =
 
 fun testResultOfAnonFun2() =
         run(fun () {
-            if (true) <!UNUSED_EXPRESSION!>42<!> else println()
+            if (true) <!NI;UNUSED_EXPRESSION!><!UNUSED_EXPRESSION!>42<!><!> else println()
         })
 
 fun testReturnFromAnonFun() =
         run(fun () {
-            return if (true) <!CONSTANT_EXPECTED_TYPE_MISMATCH!>42<!> else println()
+            return if (true) <!NI;CONSTANT_EXPECTED_TYPE_MISMATCH!><!CONSTANT_EXPECTED_TYPE_MISMATCH!>42<!><!> else println()
         })
 
-fun <!IMPLICIT_NOTHING_RETURN_TYPE!>testReturn1<!>() =
+fun <!NI;IMPLICIT_NOTHING_RETURN_TYPE!><!IMPLICIT_NOTHING_RETURN_TYPE!>testReturn1<!><!>() =
         run {
-            return <!TYPE_MISMATCH!>if (true) <!IMPLICIT_CAST_TO_ANY!>42<!>
-                   else <!IMPLICIT_CAST_TO_ANY!>println()<!><!>
+            return <!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>if (true) <!NI;IMPLICIT_CAST_TO_ANY!><!IMPLICIT_CAST_TO_ANY!>42<!><!>
+                   else <!NI;IMPLICIT_CAST_TO_ANY!><!IMPLICIT_CAST_TO_ANY!>println()<!><!><!><!>
         }
 
-fun <!IMPLICIT_NOTHING_RETURN_TYPE!>testReturn2<!>() =
+fun <!NI;IMPLICIT_NOTHING_RETURN_TYPE!><!IMPLICIT_NOTHING_RETURN_TYPE!>testReturn2<!><!>() =
         run {
-            return <!TYPE_MISMATCH!>if (true) <!IMPLICIT_CAST_TO_ANY!>42<!>
-                   else if (true) <!IMPLICIT_CAST_TO_ANY!>42<!>
-                   else <!IMPLICIT_CAST_TO_ANY!>println()<!><!>
+            return <!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>if (true) <!NI;IMPLICIT_CAST_TO_ANY!><!IMPLICIT_CAST_TO_ANY!>42<!><!>
+                   else if (true) <!NI;IMPLICIT_CAST_TO_ANY!><!IMPLICIT_CAST_TO_ANY!>42<!><!>
+                   else <!NI;IMPLICIT_CAST_TO_ANY!><!IMPLICIT_CAST_TO_ANY!>println()<!><!><!><!>
         }
 
 fun testUsage1() =
-        if (true) <!IMPLICIT_CAST_TO_ANY!>42<!>
-        else <!IMPLICIT_CAST_TO_ANY!>println()<!>
+        if (true) <!NI;IMPLICIT_CAST_TO_ANY!><!IMPLICIT_CAST_TO_ANY!>42<!><!>
+        else <!NI;IMPLICIT_CAST_TO_ANY!><!IMPLICIT_CAST_TO_ANY!>println()<!><!>
 
 fun testUsage2() =
         foo(if (true) 42 else println())
@@ -54,8 +55,8 @@ fun testUsage2Generic() =
         fooGeneric(if (true) 42 else println())
 
 val testUsage3 =
-        if (true) <!IMPLICIT_CAST_TO_ANY!>42<!>
-        else <!IMPLICIT_CAST_TO_ANY!>println()<!>
+        if (true) <!NI;IMPLICIT_CAST_TO_ANY!><!IMPLICIT_CAST_TO_ANY!>42<!><!>
+        else <!NI;IMPLICIT_CAST_TO_ANY!><!IMPLICIT_CAST_TO_ANY!>println()<!><!>
 
 val testUsage4: Any get() =
         if (true) 42 else println()

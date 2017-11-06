@@ -1,6 +1,7 @@
+// !WITH_NEW_INFERENCE
 fun <T> Array<T>.foo() {}
 
 fun test(array: Array<out Int>) {
     array.foo()
-    <!TYPE_MISMATCH!>array<!>.foo<<!PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT!>out<!> Int>()
+    <!TYPE_MISMATCH!>array<!>.<!NI;UNRESOLVED_REFERENCE_WRONG_RECEIVER!><!NI;DEBUG_INFO_UNRESOLVED_WITH_TARGET!>foo<!><!><<!NI;PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT!><!PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT!>out<!><!> Int>()
 }

@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !LANGUAGE: +SafeCastCheckBoundSmartCasts
 interface SomeClass {
     val data: Any?
@@ -13,24 +14,24 @@ object Impl : SomeSubClass {
 }
 
 fun g(a: SomeClass?) {
-    var b = <!VARIABLE_WITH_REDUNDANT_INITIALIZER!>(a as? SomeSubClass)?.foo<!>
+    var b = <!NI;VARIABLE_WITH_REDUNDANT_INITIALIZER!><!VARIABLE_WITH_REDUNDANT_INITIALIZER!>(a as? SomeSubClass)?.foo<!><!>
     b = "Hello"
-    if (<!SENSELESS_COMPARISON!>b != null<!>) {
+    if (<!NI;SENSELESS_COMPARISON!><!SENSELESS_COMPARISON!>b != null<!><!>) {
         // 'a' cannot be cast to SomeSubClass!
-        a<!UNSAFE_CALL!>.<!>hashCode()
-        a.<!UNRESOLVED_REFERENCE!>foo<!>
-        (a as? SomeSubClass)<!UNSAFE_CALL!>.<!>foo
+        a<!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>hashCode()
+        a.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>foo<!><!>
+        (a as? SomeSubClass)<!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>foo
         (a as SomeSubClass).foo
     }
-    var c = <!VARIABLE_WITH_REDUNDANT_INITIALIZER!>a as? SomeSubClass<!>
+    var c = <!NI;VARIABLE_WITH_REDUNDANT_INITIALIZER!><!VARIABLE_WITH_REDUNDANT_INITIALIZER!>a as? SomeSubClass<!><!>
     c = Impl
-    if (<!SENSELESS_COMPARISON!>c != null<!>) {
+    if (<!NI;SENSELESS_COMPARISON!><!SENSELESS_COMPARISON!>c != null<!><!>) {
         // 'a' cannot be cast to SomeSubClass
-        a<!UNSAFE_CALL!>.<!>hashCode()
-        a.<!UNRESOLVED_REFERENCE!>foo<!>
-        (a as? SomeSubClass)<!UNSAFE_CALL!>.<!>foo
-        <!DEBUG_INFO_SMARTCAST!>c<!>.hashCode()
-        <!DEBUG_INFO_SMARTCAST!>c<!>.foo
+        a<!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>hashCode()
+        a.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>foo<!><!>
+        (a as? SomeSubClass)<!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>foo
+        <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>c<!><!>.hashCode()
+        <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>c<!><!>.foo
     }
 }
 
@@ -40,28 +41,28 @@ fun f(a: SomeClass?) {
     if (aa as? SomeSubClass != null) {
         aa = null
         // 'aa' cannot be cast to SomeSubClass
-        <!DEBUG_INFO_CONSTANT!>aa<!><!UNSAFE_CALL!>.<!>hashCode()
-        aa.<!UNRESOLVED_REFERENCE!>foo<!>
-        (<!DEBUG_INFO_CONSTANT!>aa<!> as? SomeSubClass)<!UNSAFE_CALL!>.<!>foo
-        (<!ALWAYS_NULL!>aa<!> as SomeSubClass).foo
+        <!DEBUG_INFO_CONSTANT!>aa<!><!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>hashCode()
+        aa.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>foo<!><!>
+        (<!NI;DEBUG_INFO_CONSTANT!><!DEBUG_INFO_CONSTANT!>aa<!><!> as? SomeSubClass)<!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>foo
+        (<!NI;ALWAYS_NULL!><!ALWAYS_NULL!>aa<!><!> as SomeSubClass).foo
     }
     val b = (aa as? SomeSubClass)?.foo
     aa = null
     if (b != null) {
         // 'aa' cannot be cast to SomeSubClass
-        <!DEBUG_INFO_CONSTANT!>aa<!><!UNSAFE_CALL!>.<!>hashCode()
-        aa.<!UNRESOLVED_REFERENCE!>foo<!>
-        (<!DEBUG_INFO_CONSTANT!>aa<!> as? SomeSubClass)<!UNSAFE_CALL!>.<!>foo
-        (<!ALWAYS_NULL!>aa<!> as SomeSubClass).foo
+        <!DEBUG_INFO_CONSTANT!>aa<!><!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>hashCode()
+        aa.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>foo<!><!>
+        (<!NI;DEBUG_INFO_CONSTANT!><!DEBUG_INFO_CONSTANT!>aa<!><!> as? SomeSubClass)<!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>foo
+        (<!NI;ALWAYS_NULL!><!ALWAYS_NULL!>aa<!><!> as SomeSubClass).foo
     }
     aa = a
     val c = aa as? SomeSubClass
     if (c != null) {
         // 'c' can be cast to SomeSubClass
-        aa<!UNSAFE_CALL!>.<!>hashCode()
-        aa.<!UNRESOLVED_REFERENCE!>foo<!>
-        (aa as? SomeSubClass)<!UNSAFE_CALL!>.<!>foo
-        <!DEBUG_INFO_SMARTCAST!>c<!>.hashCode()
-        <!DEBUG_INFO_SMARTCAST!>c<!>.foo
+        aa<!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>hashCode()
+        aa.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>foo<!><!>
+        (aa as? SomeSubClass)<!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>foo
+        <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>c<!><!>.hashCode()
+        <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>c<!><!>.foo
     }
 }

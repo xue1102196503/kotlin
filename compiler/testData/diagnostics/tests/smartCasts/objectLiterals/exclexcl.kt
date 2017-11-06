@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 abstract class Runnable {
     abstract fun run()
 }
@@ -13,9 +14,9 @@ fun foo(): Int {
             override fun run() = Unit
         }
         k.run()
-        val d: Int = <!DEBUG_INFO_SMARTCAST!>c<!>
+        val d: Int = <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>c<!><!>
         // a is not null because of k constructor, but we do not know it
-        return a <!UNSAFE_OPERATOR_CALL!>+<!> d
+        return a <!NI;UNRESOLVED_REFERENCE_WRONG_RECEIVER!><!NI;DEBUG_INFO_UNRESOLVED_WITH_TARGET!><!UNSAFE_OPERATOR_CALL!>+<!><!><!> d
     }
     else return -1
 }

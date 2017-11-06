@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !CHECK_TYPE
 // !DIAGNOSTICS: -UNUSED_ANONYMOUS_PARAMETER -UNUSED_VARIABLE
 
@@ -17,7 +18,7 @@ fun testParamType() {
     bar.checkType { _<(String) -> Unit>() }
 
     val bas: (String) -> Unit = fun (param: String) {}
-    val bag: (Int) -> Unit = <!TYPE_MISMATCH!>fun (<!EXPECTED_PARAMETER_TYPE_MISMATCH!>param: String<!>) {}<!>
+    val bag: (Int) -> Unit = <!TYPE_MISMATCH!>fun (<!NI;EXPECTED_PARAMETER_TYPE_MISMATCH!><!EXPECTED_PARAMETER_TYPE_MISMATCH!>param: String<!><!>) {}<!>
 }
 
 fun testReceiverType() {

@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !DIAGNOSTICS: -UNUSED_PARAMETER
 @DslMarker
 @Target(AnnotationTarget.TYPE)
@@ -29,12 +30,12 @@ fun test() {
     foo12 {
         a()
         bar1 {
-            <!DSL_SCOPE_VIOLATION!>a<!>()
+            <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>a<!><!>()
             b()
         }
 
         bar2 {
-            <!DSL_SCOPE_VIOLATION!>a<!>()
+            <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>a<!><!>()
             b()
         }
     }
@@ -43,7 +44,7 @@ fun test() {
         b()
         foo12 {
             a()
-            <!DSL_SCOPE_VIOLATION!>b<!>()
+            <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>b<!><!>()
         }
     }
 
@@ -51,7 +52,7 @@ fun test() {
         b()
         foo12 {
             a()
-            <!DSL_SCOPE_VIOLATION!>b<!>()
+            <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>b<!><!>()
         }
     }
 
@@ -64,7 +65,7 @@ fun test() {
             }
 
             bar2 {
-                <!DSL_SCOPE_VIOLATION!>a<!>()
+                <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>a<!><!>()
                 b()
             }
         }
@@ -85,7 +86,7 @@ fun test() {
         foo2 {
             bar1t(this) {
                 a()
-                <!DSL_SCOPE_VIOLATION!>b<!>()
+                <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>b<!><!>()
             }
         }
     }

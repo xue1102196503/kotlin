@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // MODULE: m1
 // FILE: a.kt
 package a
@@ -21,7 +22,7 @@ import a.*
 
 fun test(b: B) {
     b.m2()
-    b.<!UNRESOLVED_REFERENCE!>m1<!>()
+    b.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>m1<!><!>()
 
     val b_: B = B()
     b_.m2()
@@ -59,7 +60,7 @@ class B {
 
 fun test(b: B) {
     b.m2()
-    b.<!UNRESOLVED_REFERENCE!>m1<!>()
+    b.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>m1<!><!>()
 
     val b_: B = B()
     b_.m2()
@@ -70,6 +71,6 @@ fun test(b: B) {
     val b_3 = B()
     b_3.m2()
 
-    val b_4 = <!UNRESOLVED_REFERENCE!>a<!>.<!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>B<!>()
-    <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>b_4<!>.<!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>m2<!>()
+    val b_4 = <!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>a<!><!>.<!NI;DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!><!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>B<!><!>()
+    <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>b_4<!>.<!NI;UNRESOLVED_REFERENCE!><!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>m2<!><!>()
 }

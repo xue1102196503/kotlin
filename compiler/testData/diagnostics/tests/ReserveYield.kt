@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !DIAGNOSTICS: -UNUSED_PARAMETER -UNUSED_EXPRESSION -UNREACHABLE_CODE -UNUSED_VARIABLE
 
 // FILE: 1.kt
@@ -12,24 +13,24 @@ fun foo(){}
 fun bar(yield: Int = 4) {}
 
 fun yield(yield: Int) {
-    "$<!YIELD_IS_RESERVED!>yield<!>"
-    "${<!YIELD_IS_RESERVED!>yield<!>}"
+    "$<!NI;YIELD_IS_RESERVED!><!YIELD_IS_RESERVED!>yield<!><!>"
+    "${<!NI;YIELD_IS_RESERVED!><!YIELD_IS_RESERVED!>yield<!><!>}"
 
-    <!YIELD_IS_RESERVED!>yield<!>
-    val foo = <!YIELD_IS_RESERVED!>yield<!> + <!YIELD_IS_RESERVED!>yield<!>
-    val foo2 = <!YIELD_IS_RESERVED!>yield<!>
+    <!NI;YIELD_IS_RESERVED!><!YIELD_IS_RESERVED!>yield<!><!>
+    val foo = <!NI;YIELD_IS_RESERVED!><!YIELD_IS_RESERVED!>yield<!><!> + <!NI;YIELD_IS_RESERVED!><!YIELD_IS_RESERVED!>yield<!><!>
+    val foo2 = <!NI;YIELD_IS_RESERVED!><!YIELD_IS_RESERVED!>yield<!><!>
 
     bar(<!YIELD_IS_RESERVED!>yield<!> = 5)
 
     yield(4)
-    <!YIELD_IS_RESERVED!>yield<!> {}
+    <!NI;YIELD_IS_RESERVED!><!YIELD_IS_RESERVED!>yield<!><!> {}
 
-    class yield<T: <!YIELD_IS_RESERVED!>yield<!><T>>
+    class yield<T: <!NI;YIELD_IS_RESERVED!><!YIELD_IS_RESERVED!>yield<!><!><T>>
 
-    return@<!YIELD_IS_RESERVED!>yield<!>
-    return@<!YIELD_IS_RESERVED!>yield<!> Unit
+    return@<!NI;YIELD_IS_RESERVED!><!YIELD_IS_RESERVED!>yield<!><!>
+    return@<!NI;YIELD_IS_RESERVED!><!YIELD_IS_RESERVED!>yield<!><!> Unit
 
-    val foo5: <!YIELD_IS_RESERVED!>yield<!><*>
+    val foo5: <!NI;YIELD_IS_RESERVED!><!YIELD_IS_RESERVED!>yield<!><!><*>
 }
 
 fun yield(i: (Int) -> Unit) {}

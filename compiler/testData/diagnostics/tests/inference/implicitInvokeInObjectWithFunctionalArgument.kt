@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !CHECK_TYPE
 // !DIAGNOSTICS: -UNUSED_PARAMETER, -UNUSED_VARIABLE
 
@@ -9,6 +10,6 @@ fun test(s: String): String {
     val a = TestClass { TestClass { TestClass } }
     a checkType { _<TestClass>() }
 
-    <!UNREACHABLE_CODE!>val b =<!> TestClass { return s }
-    <!UNREACHABLE_CODE!>b checkType { _<Nothing>() }<!>
+    <!NI;UNREACHABLE_CODE!><!UNREACHABLE_CODE!>val b =<!><!> TestClass { return s }
+    <!NI;UNREACHABLE_CODE!><!UNREACHABLE_CODE!>b checkType { <!NI;UNRESOLVED_REFERENCE_WRONG_RECEIVER!><!NI;DEBUG_INFO_UNRESOLVED_WITH_TARGET!>_<!><!><Nothing>() }<!><!>
 }

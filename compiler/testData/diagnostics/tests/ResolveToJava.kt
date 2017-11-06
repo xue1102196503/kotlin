@@ -1,36 +1,37 @@
+// !WITH_NEW_INFERENCE
 // !CHECK_TYPE
 
 // FILE: f.kt
 
 import java.*
 import java.util.*
-import <!UNRESOLVED_REFERENCE!>utils<!>.*
+import <!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>utils<!><!>.*
 
 import java.io.PrintStream
-import <!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>java.lang.Comparable<!> as Com
+import <!NI;PLATFORM_CLASS_MAPPED_TO_KOTLIN!><!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>java.lang.Comparable<!><!> as Com
 
 val l : MutableList<in Int> = ArrayList<Int>()
 
-fun test(<!UNUSED_PARAMETER!>l<!> : <!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>java.util.List<Int><!>) {
-  val <!UNUSED_VARIABLE!>x<!> : java.<!UNRESOLVED_REFERENCE!>List<!>
-  val <!UNUSED_VARIABLE!>y<!> : <!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>java.util.List<Int><!>
-  val <!UNUSED_VARIABLE!>b<!> : <!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>java.lang.Object<!>
-  val <!UNUSED_VARIABLE!>z<!> : java.<!UNRESOLVED_REFERENCE!>utils<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>List<!><Int>
+fun test(<!NI;UNUSED_PARAMETER!><!UNUSED_PARAMETER!>l<!><!> : <!NI;PLATFORM_CLASS_MAPPED_TO_KOTLIN!><!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>java.util.List<Int><!><!>) {
+  val <!NI;UNUSED_VARIABLE!><!UNUSED_VARIABLE!>x<!><!> : java.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>List<!><!>
+  val <!NI;UNUSED_VARIABLE!><!UNUSED_VARIABLE!>y<!><!> : <!NI;PLATFORM_CLASS_MAPPED_TO_KOTLIN!><!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>java.util.List<Int><!><!>
+  val <!NI;UNUSED_VARIABLE!><!UNUSED_VARIABLE!>b<!><!> : <!NI;PLATFORM_CLASS_MAPPED_TO_KOTLIN!><!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>java.lang.Object<!><!>
+  val <!NI;UNUSED_VARIABLE!><!UNUSED_VARIABLE!>z<!><!> : java.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>utils<!><!>.<!NI;DEBUG_INFO_MISSING_UNRESOLVED!><!DEBUG_INFO_MISSING_UNRESOLVED!>List<!><!><Int>
 
-  val <!UNUSED_VARIABLE!>f<!> : java.io.File? = null
+  val <!NI;UNUSED_VARIABLE!><!UNUSED_VARIABLE!>f<!><!> : java.io.File? = null
 
-  Collections.<!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER, FUNCTION_CALL_EXPECTED!>emptyList<!>
-  Collections.<!FUNCTION_CALL_EXPECTED!>emptyList<Int><!>
+  Collections.<!NI;FUNCTION_CALL_EXPECTED!><!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!><!FUNCTION_CALL_EXPECTED!>emptyList<!><!><!>
+  Collections.<!NI;FUNCTION_CALL_EXPECTED!><!FUNCTION_CALL_EXPECTED!>emptyList<Int><!><!>
   Collections.emptyList<Int>()
   Collections.<!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>emptyList<!>()
 
   checkSubtype<Set<Int>?>(Collections.singleton<Int>(1))
-  Collections.singleton<Int>(<!CONSTANT_EXPECTED_TYPE_MISMATCH!>1.0<!>)
+  Collections.singleton<Int>(<!NI;CONSTANT_EXPECTED_TYPE_MISMATCH!><!CONSTANT_EXPECTED_TYPE_MISMATCH!>1.0<!><!>)
 
-  <!RESOLUTION_TO_CLASSIFIER!>List<!><Int>
+  <!NI;RESOLUTION_TO_CLASSIFIER!><!RESOLUTION_TO_CLASSIFIER!>List<!><!><Int>
 
 
-  val <!UNUSED_VARIABLE!>o<!> = "sdf" as <!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>Object<!>
+  val <!NI;UNUSED_VARIABLE!><!UNUSED_VARIABLE!>o<!><!> = "sdf" as <!NI;PLATFORM_CLASS_MAPPED_TO_KOTLIN!><!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>Object<!><!>
 
   try {
     // ...
@@ -41,12 +42,12 @@ fun test(<!UNUSED_PARAMETER!>l<!> : <!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>java.util
 
   PrintStream("sdf")
 
-  val c : <!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>Com<Int><!>? = null
+  val c : <!NI;PLATFORM_CLASS_MAPPED_TO_KOTLIN!><!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>Com<Int><!><!>? = null
 
-  checkSubtype<<!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>java.lang.Comparable<Int><!>?>(c)
+  checkSubtype<<!NI;PLATFORM_CLASS_MAPPED_TO_KOTLIN!><!PLATFORM_CLASS_MAPPED_TO_KOTLIN!>java.lang.Comparable<Int><!><!>?>(c)
 
 //  Collections.sort<Integer>(ArrayList<Integer>())
-  xxx.<!UNRESOLVED_REFERENCE!>Class<!>()
+  xxx.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>Class<!><!>()
 }
 
 

@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 class Rule(val apply:() -> Unit)
 
 fun bar() {}
@@ -7,7 +8,7 @@ fun foo() {
 
     // this compiles and works
     val apply = rule?.apply
-    if (apply != null) <!DEBUG_INFO_SMARTCAST!>apply<!>()
+    if (apply != null) <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>apply<!><!>()
 
     // this compiles and works
     rule?.apply?.invoke()
@@ -17,7 +18,7 @@ fun foo() {
 
     // these both also ok (with smart cast / unnecessary safe call)
     if (rule != null) {
-        <!DEBUG_INFO_SMARTCAST!>rule<!>.apply()
-        rule<!UNNECESSARY_SAFE_CALL!>?.<!>apply()
+        <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>rule<!><!>.apply()
+        rule<!NI;UNNECESSARY_SAFE_CALL!><!UNNECESSARY_SAFE_CALL!>?.<!><!>apply()
     }
 }

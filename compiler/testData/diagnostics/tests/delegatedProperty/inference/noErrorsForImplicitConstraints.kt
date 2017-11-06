@@ -1,10 +1,11 @@
+// !WITH_NEW_INFERENCE
 package foo
 
 import kotlin.reflect.KProperty
 
 class A {
-    var a5: String by <!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>MyProperty1<!>()
-    var b5: String by <!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>getMyProperty1<!>()
+    var a5: String by <!NI;DELEGATE_SPECIAL_FUNCTION_RETURN_TYPE_MISMATCH!><!NI;DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE!><!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>MyProperty1<!>()<!><!>
+    var b5: String by <!NI;DELEGATE_SPECIAL_FUNCTION_RETURN_TYPE_MISMATCH!><!NI;DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE!><!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>getMyProperty1<!>()<!><!>
 }
 
 fun <A, B> getMyProperty1() = MyProperty1<A, B>()
@@ -23,8 +24,8 @@ class MyProperty1<T, R> {
 // -----------------
 
 class B {
-    var a5: String by <!DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE!>MyProperty2()<!>
-    var b5: String by <!DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE!>getMyProperty2()<!>
+    var a5: String by <!NI;DELEGATE_SPECIAL_FUNCTION_RETURN_TYPE_MISMATCH!><!NI;DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE!><!DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE!>MyProperty2()<!><!><!>
+    var b5: String by <!NI;DELEGATE_SPECIAL_FUNCTION_RETURN_TYPE_MISMATCH!><!NI;DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE!><!DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE!>getMyProperty2()<!><!><!>
 }
 
 fun <A, B> getMyProperty2() = MyProperty2<A, B>()
@@ -35,7 +36,7 @@ class MyProperty2<T, R> {
         throw Exception()
     }
 
-    <!INAPPLICABLE_OPERATOR_MODIFIER!>operator<!> fun setValue(i: Int) {
+    <!NI;INAPPLICABLE_OPERATOR_MODIFIER!><!INAPPLICABLE_OPERATOR_MODIFIER!>operator<!><!> fun setValue(i: Int) {
         println("set")
     }
 }

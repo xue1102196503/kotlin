@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !DIAGNOSTICS: -UNREACHABLE_CODE
 interface Tr<T> {
     var v: T

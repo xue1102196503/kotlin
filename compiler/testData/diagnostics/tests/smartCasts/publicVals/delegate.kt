@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 import kotlin.reflect.KProperty
 
 class Delegate {
@@ -13,11 +14,11 @@ class Example {
 
     public fun foo(): String {
         // Smart cast is not possible if property is delegated
-        return if (p != null) <!SMARTCAST_IMPOSSIBLE!>p<!> else ""
+        return if (p != null) <!NI;SMARTCAST_IMPOSSIBLE!><!NI;SMARTCAST_IMPOSSIBLE!><!SMARTCAST_IMPOSSIBLE!>p<!><!><!> else ""
     }
 
     public fun bar(): String {
         // But is possible for non-delegated value property even if it's public
-        return if (r != null) <!DEBUG_INFO_SMARTCAST!>r<!> else ""
+        return if (r != null) <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>r<!><!> else ""
     }
 }

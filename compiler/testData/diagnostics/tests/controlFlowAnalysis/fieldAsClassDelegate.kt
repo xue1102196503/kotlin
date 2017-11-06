@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // See KT-15566
 
 import DefaultHttpClient.client
@@ -8,7 +9,7 @@ class HttpClientImpl : HttpClient
 
 // Below we should have initialization error for both (!) delegates
 
-object DefaultHttpClient : HttpClient by <!UNINITIALIZED_VARIABLE!>client<!> {
+object DefaultHttpClient : HttpClient by <!NI;UNINITIALIZED_VARIABLE!><!UNINITIALIZED_VARIABLE!>client<!><!> {
     val client = HttpClientImpl()
 }
 
@@ -21,15 +22,15 @@ object DefaultHttpClientWithFun : HttpClient by fClient() {
 
 private fun fClient() = HttpClientImpl()
 
-private fun <T> lazy(init: () -> T): kotlin.<!UNRESOLVED_REFERENCE!>Lazy<!><T> {
+private fun <T> lazy(init: () -> T): kotlin.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>Lazy<!><!><T> {
     init()
     null!!
 }
 
 object DefaultHttpClientWithBy : HttpClient by client {
-    val client by lazy { HttpClientImpl() }
+    val client by <!NI;DELEGATE_SPECIAL_FUNCTION_MISSING!>lazy { HttpClientImpl() }<!>
 }
 
-object DefaultFqHttpClient : HttpClient by DefaultFqHttpClient.<!UNINITIALIZED_VARIABLE!>client<!> {
+object DefaultFqHttpClient : HttpClient by DefaultFqHttpClient.<!NI;UNINITIALIZED_VARIABLE!><!UNINITIALIZED_VARIABLE!>client<!><!> {
     val client = HttpClientImpl()
 }

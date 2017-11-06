@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 class Outer {
     class Nested<T>
 }
@@ -5,4 +6,4 @@ class Outer {
 fun nested() = Outer.Nested<Int>()
 fun noArguments() = Outer.<!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>Nested<!>()
 fun noArgumentsExpectedType(): Outer.Nested<String> = Outer.Nested()
-fun manyArguments() = Outer.Nested<!WRONG_NUMBER_OF_TYPE_ARGUMENTS!><String, Int><!>()
+fun manyArguments() = Outer.Nested<!NI;WRONG_NUMBER_OF_TYPE_ARGUMENTS!><!WRONG_NUMBER_OF_TYPE_ARGUMENTS!><String, Int><!><!>()

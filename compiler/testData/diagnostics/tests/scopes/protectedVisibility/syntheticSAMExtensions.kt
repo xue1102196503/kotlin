@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // FILE: abc/A.java
 package abc;
 public class A {
@@ -11,20 +12,20 @@ class Data(var x: A)
 
 class B : A() {
     fun baz(a: A, b: B, d: Data) {
-        a.<!INVISIBLE_MEMBER!>foo<!> { }
+        a.<!NI;INVISIBLE_MEMBER!><!INVISIBLE_MEMBER!>foo<!><!> { }
 
         b.foo { }
 
         if (a is B) {
-            <!DEBUG_INFO_SMARTCAST!>a<!>.foo {}
+            <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>a<!><!>.foo {}
         }
 
         if (d.x is B) {
-            <!SMARTCAST_IMPOSSIBLE!>d.x<!>.foo {}
+            <!NI;SMARTCAST_IMPOSSIBLE!><!SMARTCAST_IMPOSSIBLE!>d.x<!><!>.<!NI;INVISIBLE_MEMBER!>foo<!> {}
         }
     }
 }
 
 fun baz(a: A) {
-    a.<!INVISIBLE_MEMBER!>foo<!> { }
+    a.<!NI;INVISIBLE_MEMBER!><!INVISIBLE_MEMBER!>foo<!><!> { }
 }

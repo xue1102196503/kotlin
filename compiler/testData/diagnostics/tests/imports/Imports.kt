@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // FILE:a.kt
 package a
 
@@ -7,16 +8,16 @@ import b.ext      //extension function
 import b.value    //property
 import b.C.Companion.bar    //function from companion object
 import b.C.Companion.cValue //property from companion object
-import b.<!UNRESOLVED_REFERENCE!>constant<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>fff<!>     //function from val
-import b.<!UNRESOLVED_REFERENCE!>constant<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>dValue<!>  //property from val
+import b.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>constant<!><!>.<!NI;DEBUG_INFO_MISSING_UNRESOLVED!><!DEBUG_INFO_MISSING_UNRESOLVED!>fff<!><!>     //function from val
+import b.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>constant<!><!>.<!NI;DEBUG_INFO_MISSING_UNRESOLVED!><!DEBUG_INFO_MISSING_UNRESOLVED!>dValue<!><!>  //property from val
 import b.constant
 import b.E.Companion.f      //val from companion object
-import <!UNRESOLVED_REFERENCE!>smth<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>illegal<!>
-import b.C.<!UNRESOLVED_REFERENCE!>smth<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>illegal<!>
-import b.<!UNRESOLVED_REFERENCE!>bar<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>smth<!>
-import b.<!UNRESOLVED_REFERENCE!>bar<!>.*
-import b.<!UNRESOLVED_REFERENCE!>unr<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>unr<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>unr<!>
-import <!UNRESOLVED_REFERENCE!>unr<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>unr<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>unr<!>
+import <!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>smth<!><!>.<!NI;DEBUG_INFO_MISSING_UNRESOLVED!><!DEBUG_INFO_MISSING_UNRESOLVED!>illegal<!><!>
+import b.C.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>smth<!><!>.<!NI;DEBUG_INFO_MISSING_UNRESOLVED!><!DEBUG_INFO_MISSING_UNRESOLVED!>illegal<!><!>
+import b.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>bar<!><!>.<!NI;DEBUG_INFO_MISSING_UNRESOLVED!><!DEBUG_INFO_MISSING_UNRESOLVED!>smth<!><!>
+import b.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>bar<!><!>.*
+import b.<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>unr<!><!>.<!NI;DEBUG_INFO_MISSING_UNRESOLVED!><!DEBUG_INFO_MISSING_UNRESOLVED!>unr<!><!>.<!NI;DEBUG_INFO_MISSING_UNRESOLVED!><!DEBUG_INFO_MISSING_UNRESOLVED!>unr<!><!>
+import <!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>unr<!><!>.<!NI;DEBUG_INFO_MISSING_UNRESOLVED!><!DEBUG_INFO_MISSING_UNRESOLVED!>unr<!><!>.<!NI;DEBUG_INFO_MISSING_UNRESOLVED!><!DEBUG_INFO_MISSING_UNRESOLVED!>unr<!><!>
 
 fun test(arg: B) {
     foo(value)
@@ -25,7 +26,7 @@ fun test(arg: B) {
     bar()
     foo(cValue)
 
-    <!UNRESOLVED_REFERENCE!>fff<!>(<!UNRESOLVED_REFERENCE!>dValue<!>)
+    <!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>fff<!><!>(<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>dValue<!><!>)
 
     constant.fff(constant.dValue)
 
@@ -72,7 +73,7 @@ fun bar() {}
 //FILE:c.kt
 package c
 
-import c.<!CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON!>C<!>.*
+import c.<!NI;CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON!><!CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON!>C<!><!>.*
 
 object C {
     fun f() {
@@ -81,7 +82,7 @@ object C {
 }
 
 fun foo() {
-    if (<!UNRESOLVED_REFERENCE!>i<!> <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>==<!> 3) <!UNRESOLVED_REFERENCE!>f<!>()
+    if (<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>i<!><!> <!NI;RESULT_TYPE_MISMATCH!><!NI;DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!><!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>==<!><!><!> 3) <!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>f<!><!>()
 }
 
 //FILE:d.kt

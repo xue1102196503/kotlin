@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // MODULE: m1
 // FILE: a.kt
 package p
@@ -31,6 +32,6 @@ fun test(b: B?, c: C) {
     b?.foo(1, 1)
     c.foo(1, 1)
     if (b is C) {
-        b<!UNNECESSARY_SAFE_CALL!>?.<!><!CANNOT_COMPLETE_RESOLVE!>foo<!>(1, 1)
+        b<!NI;UNNECESSARY_SAFE_CALL!><!UNNECESSARY_SAFE_CALL!>?.<!><!><!NI;OVERLOAD_RESOLUTION_AMBIGUITY!><!CANNOT_COMPLETE_RESOLVE!>foo<!><!>(1, 1)
     }
 }

@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 open class C<T>
 
 typealias CStar = C<*>
@@ -13,4 +14,4 @@ class Test4 : CStar {
     constructor() : <!EXPANDED_TYPE_CANNOT_BE_CONSTRUCTED!>super<!>()
 }
 
-class Test5 : CT<<!PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE!>*<!>>()
+class Test5 : CT<<!NI;PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE!><!PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE!>*<!><!>>()

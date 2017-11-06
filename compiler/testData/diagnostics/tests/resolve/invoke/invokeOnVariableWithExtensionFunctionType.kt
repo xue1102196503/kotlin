@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // FILE: 1.kt
 package fooIsExtension
 
@@ -16,15 +17,15 @@ fun test(a: A, b: B) {
 
         b.(foo)()
 
-        (b.<!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>foo<!>)()
+        (b.<!NI;UNRESOLVED_REFERENCE_WRONG_RECEIVER!><!NI;DEBUG_INFO_UNRESOLVED_WITH_TARGET!><!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>foo<!><!><!>)()
 
         foo(b)
         (foo)(b)
     }
 
     with(b) {
-        a.foo(<!NO_VALUE_FOR_PARAMETER!>)<!>
-        a.<!FUNCTION_EXPECTED!>(<!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>foo<!>)<!>()
+        a.foo(<!NI;NO_VALUE_FOR_PARAMETER!><!NO_VALUE_FOR_PARAMETER!>)<!><!>
+        a.<!NI;FUNCTION_EXPECTED!><!FUNCTION_EXPECTED!>(<!NI;UNRESOLVED_REFERENCE_WRONG_RECEIVER!><!NI;DEBUG_INFO_UNRESOLVED_WITH_TARGET!><!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>foo<!><!><!>)<!><!>()
 
         (a.foo)()
 
@@ -58,15 +59,15 @@ fun test(a: A, b: B) {
 
         b.(foo)()
 
-        <!FUNCTION_EXPECTED!>(b.<!FUNCTION_CALL_EXPECTED!>foo<!>)<!>()
+        <!NI;FUNCTION_EXPECTED!><!FUNCTION_EXPECTED!>(b.<!NI;FUNCTION_CALL_EXPECTED!><!FUNCTION_CALL_EXPECTED!>foo<!><!>)<!><!>()
 
         foo(b)
         (foo)(b)
     }
 
     with(b) {
-        a.foo(<!NO_VALUE_FOR_PARAMETER!>)<!>
-        a.<!FUNCTION_EXPECTED!>(<!UNRESOLVED_REFERENCE!>foo<!>)<!>()
+        a.foo(<!NI;NO_VALUE_FOR_PARAMETER!><!NO_VALUE_FOR_PARAMETER!>)<!><!>
+        a.<!NI;FUNCTION_EXPECTED!><!FUNCTION_EXPECTED!>(<!NI;UNRESOLVED_REFERENCE!><!UNRESOLVED_REFERENCE!>foo<!><!>)<!><!>()
 
         (a.foo)()
 

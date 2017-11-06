@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !DIAGNOSTICS: -UNUSED_PARAMETER
 
 class Example
@@ -21,16 +22,16 @@ fun a() {
             val b = Example()
 
             consumeString(a + b)
-            consumeInt(a - b)
+            consumeInt(<!NI;TYPE_MISMATCH!>a <!NI;OPERATOR_MODIFIER_REQUIRED!>-<!> b<!>)
 
             consumeString(a plus b)
             consumeInt(a minus b)
 
             a * b
-            a <!OPERATOR_MODIFIER_REQUIRED!>/<!> b
+            a <!NI;OPERATOR_MODIFIER_REQUIRED!><!OPERATOR_MODIFIER_REQUIRED!>/<!><!> b
 
             a times b
-            a <!INFIX_MODIFIER_REQUIRED!>div<!> b
+            a <!NI;INFIX_MODIFIER_REQUIRED!><!INFIX_MODIFIER_REQUIRED!>div<!><!> b
         }
     }
 }

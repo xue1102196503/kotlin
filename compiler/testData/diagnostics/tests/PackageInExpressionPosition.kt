@@ -1,26 +1,27 @@
+// !WITH_NEW_INFERENCE
 package foo
 
 class X {}
 
-val s = <!EXPRESSION_EXPECTED_PACKAGE_FOUND!>java<!>
-val ss = <!NO_COMPANION_OBJECT!>System<!>
-val sss = <!NO_COMPANION_OBJECT!>X<!>
-val x = "${<!NO_COMPANION_OBJECT!>System<!>}"
-val xs = java.<!EXPRESSION_EXPECTED_PACKAGE_FOUND!>lang<!>
-val xss = java.lang.<!NO_COMPANION_OBJECT!>System<!>
-val xsss = foo.<!NO_COMPANION_OBJECT!>X<!>
-val xssss = <!EXPRESSION_EXPECTED_PACKAGE_FOUND!>foo<!>
-val f = { <!NO_COMPANION_OBJECT!>System<!> }
+val s = <!NI;EXPRESSION_EXPECTED_PACKAGE_FOUND!><!EXPRESSION_EXPECTED_PACKAGE_FOUND!>java<!><!>
+val ss = <!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!>
+val sss = <!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>X<!><!>
+val x = "${<!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!>}"
+val xs = java.<!NI;EXPRESSION_EXPECTED_PACKAGE_FOUND!><!EXPRESSION_EXPECTED_PACKAGE_FOUND!>lang<!><!>
+val xss = java.lang.<!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!>
+val xsss = foo.<!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>X<!><!>
+val xssss = <!NI;EXPRESSION_EXPECTED_PACKAGE_FOUND!><!EXPRESSION_EXPECTED_PACKAGE_FOUND!>foo<!><!>
+val f = { <!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!> }
 
 fun main(args : Array<String>) {
-    <!EXPRESSION_EXPECTED_PACKAGE_FOUND!>java<!> = null
-    <!NO_COMPANION_OBJECT!>System<!> = null
-    <!NO_COMPANION_OBJECT!>System<!>!!
-    java.lang.<!NO_COMPANION_OBJECT!>System<!> = null
-    java.lang.<!NO_COMPANION_OBJECT!>System<!>!!
-    <!NO_COMPANION_OBJECT!>System<!> is Int
-    <!INVISIBLE_MEMBER!>System<!>()
-    (<!NO_COMPANION_OBJECT!>System<!>)
-    foo@ <!NO_COMPANION_OBJECT!>System<!>
-    null in <!NO_COMPANION_OBJECT!>System<!>
+    <!NI;EXPRESSION_EXPECTED_PACKAGE_FOUND!><!EXPRESSION_EXPECTED_PACKAGE_FOUND!>java<!><!> = null
+    <!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!> = null
+    <!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!>!!
+    java.lang.<!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!> = null
+    java.lang.<!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!>!!
+    <!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!> is Int
+    <!NI;INVISIBLE_MEMBER!><!INVISIBLE_MEMBER!>System<!><!>()
+    (<!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!>)
+    foo@ <!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!>
+    null <!NI;RESULT_TYPE_MISMATCH!>in<!> <!NI;NO_COMPANION_OBJECT!><!NO_COMPANION_OBJECT!>System<!><!>
 }

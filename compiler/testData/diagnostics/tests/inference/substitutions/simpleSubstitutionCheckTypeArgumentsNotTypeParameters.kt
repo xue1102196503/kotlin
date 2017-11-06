@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 class A<T> {
     fun useT(t: T) = t
 

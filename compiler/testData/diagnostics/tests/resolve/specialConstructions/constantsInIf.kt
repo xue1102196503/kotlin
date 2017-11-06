@@ -1,13 +1,14 @@
+// !WITH_NEW_INFERENCE
 // !DIAGNOSTICS: -USELESS_ELVIS
 
 fun test() {
-    bar(if (true) {
+    bar(<!NI;TYPE_MISMATCH!>if (true) {
         <!CONSTANT_EXPECTED_TYPE_MISMATCH!>1<!>
     } else {
         <!CONSTANT_EXPECTED_TYPE_MISMATCH!>2<!>
-    })
+    }<!>)
 
-    bar(<!CONSTANT_EXPECTED_TYPE_MISMATCH!>1<!> ?: <!CONSTANT_EXPECTED_TYPE_MISMATCH!>2<!>)
+    bar(<!NI;TYPE_MISMATCH!><!NI;TYPE_MISMATCH!><!CONSTANT_EXPECTED_TYPE_MISMATCH!>1<!> ?: <!CONSTANT_EXPECTED_TYPE_MISMATCH!>2<!><!><!>)
 }
 
 fun bar(s: String) = s

@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !LANGUAGE: +ExpectedTypeFromCast
 // !DIAGNOSTICS: -UNUSED_VARIABLE -DEBUG_INFO_LEAKING_THIS
 
@@ -27,10 +28,10 @@ val xExplicit: X = Test().findViewById(0)
 val xCast = Test().findViewById(0) as X
 
 val xCastExplicitType = Test().findViewById<X>(0) as X
-val xSafeCastExplicitType = Test().findViewById<X>(0) <!USELESS_CAST!>as? X<!>
+val xSafeCastExplicitType = Test().findViewById<X>(0) <!NI;USELESS_CAST!><!USELESS_CAST!>as? X<!><!>
 
 val yExplicit: Y<String> = Test().findViewById(0)
-val yCast = Test().findViewById(0) as Y<String>
+val yCast = Test().findViewById(0) <!NI;UNCHECKED_CAST!>as Y<String><!>
 
 
 class TestChild : Test() {
@@ -38,7 +39,7 @@ class TestChild : Test() {
     val xCast = findViewById(0) as X
 
     val yExplicit: Y<String> = findViewById(0)
-    val yCast = findViewById(0) as Y<String>
+    val yCast = findViewById(0) <!NI;UNCHECKED_CAST!>as Y<String><!>
 }
 
 fun test(t: Test) {
@@ -46,13 +47,13 @@ fun test(t: Test) {
     val xCast = t.findViewById(0) as X
 
     val yExplicit: Y<String> = t.findViewById(0)
-    val yCast = t.findViewById(0) as Y<String>
+    val yCast = t.findViewById(0) <!NI;UNCHECKED_CAST!>as Y<String><!>
 }
 
 fun test2(t: Test?) {
     val xSafeCallSafeCast = t?.findViewById(0) as? X
-    val xSafeCallSafeCastExplicitType = t?.findViewById<X>(0) <!USELESS_CAST!>as? X<!>
+    val xSafeCallSafeCastExplicitType = t?.findViewById<X>(0) <!NI;USELESS_CAST!><!USELESS_CAST!>as? X<!><!>
 
     val xSafeCallCast = t?.findViewById(0) as X
-    val xSafeCallCastExplicitType = t<!UNNECESSARY_SAFE_CALL!>?.<!>findViewById<X>(0) as X
+    val xSafeCallCastExplicitType = t<!NI;UNNECESSARY_SAFE_CALL!><!UNNECESSARY_SAFE_CALL!>?.<!><!>findViewById<X>(0) as X
 }

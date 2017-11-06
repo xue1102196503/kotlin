@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 //KT-2164 !! does not propagate nullability information
 package kt2164
 
@@ -6,33 +7,33 @@ fun foo(x: Int): Int = x + 1
 fun main(args : Array<String>) {
     val x: Int? = null
 
-    foo(<!TYPE_MISMATCH!>x<!>)
+    foo(<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>x<!><!>)
 
     if (x != null) {
-        foo(<!DEBUG_INFO_SMARTCAST!>x<!>)
-        foo(x<!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!>)
-        foo(<!DEBUG_INFO_SMARTCAST!>x<!>)
+        foo(<!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>x<!><!>)
+        foo(x<!NI;UNNECESSARY_NOT_NULL_ASSERTION!><!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!><!>)
+        foo(<!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>x<!><!>)
     }
 
-    foo(<!TYPE_MISMATCH!>x<!>)
+    foo(<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>x<!><!>)
 
     if (x != null) {
-        foo(<!DEBUG_INFO_SMARTCAST!>x<!>)
-        foo(x<!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!>)
-        foo(<!DEBUG_INFO_SMARTCAST!>x<!>)
+        foo(<!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>x<!><!>)
+        foo(x<!NI;UNNECESSARY_NOT_NULL_ASSERTION!><!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!><!>)
+        foo(<!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>x<!><!>)
     } else {
-        foo(<!TYPE_MISMATCH, DEBUG_INFO_CONSTANT!>x<!>)
-        <!UNREACHABLE_CODE!>foo(<!><!ALWAYS_NULL!>x<!>!!<!UNREACHABLE_CODE!>)<!>
-        <!UNREACHABLE_CODE!>foo(<!DEBUG_INFO_SMARTCAST!>x<!>)<!>
+        foo(<!NI;TYPE_MISMATCH!><!NI;DEBUG_INFO_CONSTANT!><!TYPE_MISMATCH!><!DEBUG_INFO_CONSTANT!>x<!><!><!><!>)
+        <!UNREACHABLE_CODE!>foo(<!><!NI;ALWAYS_NULL!><!ALWAYS_NULL!>x<!><!>!!<!UNREACHABLE_CODE!>)<!>
+        <!UNREACHABLE_CODE!>foo(<!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>x<!><!>)<!>
     }
 
-    foo(<!DEBUG_INFO_SMARTCAST!>x<!>)
-    foo(x<!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!>)
-    foo(<!DEBUG_INFO_SMARTCAST!>x<!>)
+    foo(<!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>x<!><!>)
+    foo(x<!NI;UNNECESSARY_NOT_NULL_ASSERTION!><!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!><!>)
+    foo(<!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>x<!><!>)
     
     val y: Int? = null
     y!!
-    y<!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!>
-    foo(<!DEBUG_INFO_SMARTCAST!>y<!>)
-    foo(y<!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!>)
+    y<!NI;UNNECESSARY_NOT_NULL_ASSERTION!><!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!><!>
+    foo(<!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>y<!><!>)
+    foo(y<!NI;UNNECESSARY_NOT_NULL_ASSERTION!><!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!><!>)
 }

@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !LANGUAGE: +ArrayLiteralsInAnnotations, +AssigningArraysToVarargsInNamedFormInAnnotations
 
 // FILE: JavaAnn.java
@@ -11,13 +12,13 @@
 
 annotation class Ann(vararg val s: String)
 
-@Ann(s = arrayOf())
+@Ann(s = <!NI;TYPE_MISMATCH!>arrayOf()<!>)
 fun test1() {}
 
-@Ann(s = <!TYPE_MISMATCH!>intArrayOf()<!>)
+@Ann(s = <!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>intArrayOf()<!><!>)
 fun test2() {}
 
-@Ann(s = <!TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH!>arrayOf(1)<!>)
+@Ann(s = <!NI;TYPE_MISMATCH!><!TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH!>arrayOf(1)<!><!>)
 fun test3() {}
 
 @Ann("value1", "value2")
@@ -26,7 +27,7 @@ fun test4() {}
 @Ann(s = ["value"])
 fun test5() {}
 
-@JavaAnn(value = arrayOf("value"))
+@JavaAnn(value = <!NI;TYPE_MISMATCH!>arrayOf("value")<!>)
 fun jTest1() {}
 
 @JavaAnn(value = ["value"])
@@ -38,8 +39,8 @@ fun jTest3() {}
 
 annotation class IntAnn(vararg val i: Int)
 
-@IntAnn(i = [1, 2])
+@IntAnn(i = <!NI;TYPE_MISMATCH!>[1, 2]<!>)
 fun foo1() {}
 
-@IntAnn(i = intArrayOf(0))
+@IntAnn(i = <!NI;TYPE_MISMATCH!>intArrayOf(0)<!>)
 fun foo2() {}

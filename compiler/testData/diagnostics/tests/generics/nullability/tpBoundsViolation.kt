@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !CHECK_TYPE
 // !DIAGNOSTICS: -UNUSED_PARAMETER,-UNUSED_VARIABLE
 
@@ -16,15 +17,15 @@ class A<F> {
         val x2 = foo2(x)
         x2.checkType { _<F>() }
 
-        foo1<<!UPPER_BOUND_VIOLATED!>F?<!>>(y)
-        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>foo1<!>(y)
+        foo1<<!NI;UPPER_BOUND_VIOLATED!><!UPPER_BOUND_VIOLATED!>F?<!><!>>(y)
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>foo1<!>(<!NI;TYPE_MISMATCH!>y<!>)
         foo2<F?>(y)
 
         val x3 = foo2(y)
         x3.checkType { _<F?>() }
 
-        foo1<F>(<!TYPE_MISMATCH!>y<!>)
-        foo2<F>(<!TYPE_MISMATCH!>y<!>)
+        foo1<F>(<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>y<!><!>)
+        foo2<F>(<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>y<!><!>)
 
         foo1<Z>(z)
 
@@ -36,13 +37,13 @@ class A<F> {
         val x5 = foo2(z)
         x4.checkType { _<Z>() }
 
-        foo1<<!UPPER_BOUND_VIOLATED!>W<!>>(w)
-        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>foo1<!>(w)
+        foo1<<!NI;UPPER_BOUND_VIOLATED!><!UPPER_BOUND_VIOLATED!>W<!><!>>(w)
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>foo1<!>(<!NI;TYPE_MISMATCH!>w<!>)
         foo2<W>(w)
 
         val x6 = foo2(w)
         x6.checkType { _<W>() }
 
-        foo1<<!UPPER_BOUND_VIOLATED!>W<!>>(w)
+        foo1<<!NI;UPPER_BOUND_VIOLATED!><!UPPER_BOUND_VIOLATED!>W<!><!>>(w)
     }
 }

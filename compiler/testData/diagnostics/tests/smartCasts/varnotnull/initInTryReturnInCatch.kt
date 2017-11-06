@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // JAVAC_EXPECTED_FILE
 // See also KT-10735
 fun test() {
@@ -8,7 +9,7 @@ fun test() {
     catch (e: Exception) {
         return
     }
-    <!DEBUG_INFO_SMARTCAST!>a<!>.hashCode() // a is never null here
+    <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>a<!><!>.hashCode() // a is never null here
 }
 class A: Exception()
 class B: Exception()
@@ -23,7 +24,7 @@ fun test2() {
     catch (e: B) {
         return
     }
-    <!DEBUG_INFO_SMARTCAST!>a<!>.hashCode() // a is never null here
+    <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>a<!><!>.hashCode() // a is never null here
 }
 fun test3() {
     var a: Int? = null
@@ -36,7 +37,7 @@ fun test3() {
     catch (e: B) {
         return
     }
-    a<!UNSAFE_CALL!>.<!>hashCode() // a is nullable here
+    a<!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>hashCode() // a is nullable here
 }
 fun test4() {
     var a: Int? = null
@@ -49,12 +50,12 @@ fun test4() {
     catch (e: B) {
         return
     }
-    a<!UNSAFE_CALL!>.<!>hashCode() // a is nullable here
+    a<!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>hashCode() // a is nullable here
 }
 fun test5() {
     var a: Int?// = null
     try {
-        <!UNUSED_VALUE!>a =<!> 3
+        <!NI;UNUSED_VALUE!><!UNUSED_VALUE!>a =<!><!> 3
     }
     catch (e: Exception) {
         return
@@ -62,12 +63,12 @@ fun test5() {
     finally {
         a = 5
     }
-    <!DEBUG_INFO_SMARTCAST!>a<!>.hashCode() // a is never null here
+    <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>a<!><!>.hashCode() // a is never null here
 }
 fun test6() {
     var a: Int?// = null
     try {
-        <!UNUSED_VALUE!>a =<!> 3
+        <!NI;UNUSED_VALUE!><!UNUSED_VALUE!>a =<!><!> 3
     }
     catch (e: Exception) {
         return
@@ -75,5 +76,5 @@ fun test6() {
     finally {
         a = null
     }
-    <!DEBUG_INFO_CONSTANT!>a<!><!UNSAFE_CALL!>.<!>hashCode() // a is null here
+    <!DEBUG_INFO_CONSTANT!>a<!><!NI;UNSAFE_CALL!><!UNSAFE_CALL!>.<!><!>hashCode() // a is null here
 }

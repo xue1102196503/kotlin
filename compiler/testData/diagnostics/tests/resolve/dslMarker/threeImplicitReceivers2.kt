@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !DIAGNOSTICS: -UNUSED_PARAMETER
 @DslMarker
 @Target(AnnotationTarget.TYPE)
@@ -36,15 +37,15 @@ fun test() {
             baz {
                 y()
 
-                <!UNRESOLVED_REFERENCE_WRONG_RECEIVER, FUNCTION_EXPECTED!>x<!>()
+                <!NI;DEBUG_INFO_MISSING_UNRESOLVED!><!NI;UNRESOLVED_REFERENCE_WRONG_RECEIVER!><!NI;DEBUG_INFO_UNRESOLVED_WITH_TARGET!><!UNRESOLVED_REFERENCE_WRONG_RECEIVER!><!FUNCTION_EXPECTED!>x<!><!><!><!>()<!>
 
                 with(D()) {
                     x()
                 }
 
                 foo1 {
-                    <!DSL_SCOPE_VIOLATION!>x<!>()
-                    <!DSL_SCOPE_VIOLATION!>y<!>()
+                    <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>x<!><!>()
+                    <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>y<!><!>()
 
                     with(A()) {
                         x()
@@ -52,19 +53,19 @@ fun test() {
                     }
 
                     with(D()) {
-                        <!DSL_SCOPE_VIOLATION!>x<!>()
+                        <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>x<!><!>()
                     }
                     A().x()
                 }
 
                 foo2 {
                     x()
-                    <!DSL_SCOPE_VIOLATION!>y<!>()
+                    <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>y<!><!>()
                 }
 
                 foo3 {
-                    <!DSL_SCOPE_VIOLATION!>x<!>()
-                    <!DSL_SCOPE_VIOLATION!>y<!>()
+                    <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>x<!><!>()
+                    <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>y<!><!>()
                 }
             }
         }
@@ -74,7 +75,7 @@ fun test() {
         foo {
             baz {
                 bar {
-                    <!DSL_SCOPE_VIOLATION!>x<!>()
+                    <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>x<!><!>()
                     y()
                 }
             }
@@ -85,7 +86,7 @@ fun test() {
         foo {
             baz {
                 bar {
-                    <!DSL_SCOPE_VIOLATION!>x<!>()
+                    <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>x<!><!>()
                     y()
                 }
             }
@@ -96,7 +97,7 @@ fun test() {
         foo {
             baz {
                 bar {
-                    <!DSL_SCOPE_VIOLATION!>x<!>()
+                    <!NI;DSL_SCOPE_VIOLATION!><!DSL_SCOPE_VIOLATION!>x<!><!>()
                     y()
                 }
             }

@@ -1,7 +1,8 @@
+// !WITH_NEW_INFERENCE
 import kotlin.reflect.KProperty
 
 class A {
-    var a by <!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>MyProperty<!>()
+    var <!NI;IMPLICIT_NOTHING_PROPERTY_TYPE!>a<!> by <!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>MyProperty<!>()
 }
 
 class MyProperty<T, R> {

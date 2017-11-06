@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !DIAGNOSTICS: -UNUSED_PARAMETER
 class A(x: Int) {
     constructor(x: Double): this(1)
@@ -17,9 +18,9 @@ val y2: B<Int> = B("")
 val y3: B<Int> = B<Int>(1)
 val y4: B<Int> = B<Int>("")
 
-val y5: B<String> = B<String>(<!CONSTANT_EXPECTED_TYPE_MISMATCH!>1<!>)
+val y5: B<String> = B<String>(<!NI;CONSTANT_EXPECTED_TYPE_MISMATCH!><!CONSTANT_EXPECTED_TYPE_MISMATCH!>1<!><!>)
 val y6: B<String> = B<String>("")
-val y7: B<String> = <!TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH!>B(1)<!>
+val y7: B<String> = <!TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH!>B(<!NI;CONSTANT_EXPECTED_TYPE_MISMATCH!>1<!>)<!>
 val y8: B<String> = B("")
 
 val y9 = B(1)

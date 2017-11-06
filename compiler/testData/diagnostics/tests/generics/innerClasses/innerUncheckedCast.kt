@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !CHECK_TYPE
 
 class Outer<E> {
@@ -8,10 +9,10 @@ class Outer<E> {
 
     fun foo(x: InnerBase<String>, y: Any?, z: Outer<*>.InnerBase<String>) {
         if (x is Inner) {
-            <!DEBUG_INFO_SMARTCAST!>x<!>.prop.checkType { _<E>() }
+            <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>x<!><!>.prop.checkType { _<E>() }
         }
 
-        if (y is <!NO_TYPE_ARGUMENTS_ON_RHS!>Inner<!>) return
+        if (y is <!NI;NO_TYPE_ARGUMENTS_ON_RHS!><!NO_TYPE_ARGUMENTS_ON_RHS!>Inner<!><!>) return
 
         if (z is Inner) {
             <!DEBUG_INFO_SMARTCAST!>z<!>.prop.checkType { _<Any?>() }
@@ -19,13 +20,13 @@ class Outer<E> {
         }
 
         if (y is Outer<*>.Inner<*>) {
-            <!DEBUG_INFO_SMARTCAST!>y<!>.prop.checkType { _<Any?>() }
+            <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>y<!><!>.prop.checkType { _<Any?>() }
         }
     }
 
     fun bar(x: InnerBase<String>, y: Any?, z: Outer<*>.InnerBase<String>) {
         x as Inner
-        y as <!NO_TYPE_ARGUMENTS_ON_RHS!>Inner<!>
+        y as <!NI;NO_TYPE_ARGUMENTS_ON_RHS!><!NO_TYPE_ARGUMENTS_ON_RHS!>Inner<!><!>
         z as Inner
     }
 }

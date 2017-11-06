@@ -1,11 +1,12 @@
-operator fun <K, V> MutableMap<K, V>.set(<!UNUSED_PARAMETER!>k<!>: K, <!UNUSED_PARAMETER!>v<!>: V) {}
+// !WITH_NEW_INFERENCE
+operator fun <K, V> MutableMap<K, V>.set(<!NI;UNUSED_PARAMETER!><!UNUSED_PARAMETER!>k<!><!>: K, <!NI;UNUSED_PARAMETER!><!UNUSED_PARAMETER!>v<!><!>: V) {}
 
 fun foo(a: MutableMap<String, String>, x: String?) {
-    a[x!!] = <!DEBUG_INFO_SMARTCAST!>x<!>
-    a[<!DEBUG_INFO_SMARTCAST!>x<!>] = x<!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!>
+    a[x!!] = <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>x<!><!>
+    a[<!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>x<!><!>] = x<!NI;UNNECESSARY_NOT_NULL_ASSERTION!><!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!><!>
 }
 
 fun foo1(a: MutableMap<String, String>, x: String?) {
-    <!TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS!>a[x]<!> = x!!
-    a[x<!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!>] = <!DEBUG_INFO_SMARTCAST!>x<!>
+    <!TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS!>a[<!NI;TYPE_MISMATCH!>x<!>]<!> = x!!
+    a[x<!NI;UNNECESSARY_NOT_NULL_ASSERTION!><!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!><!>] = <!NI;DEBUG_INFO_SMARTCAST!><!DEBUG_INFO_SMARTCAST!>x<!><!>
 }

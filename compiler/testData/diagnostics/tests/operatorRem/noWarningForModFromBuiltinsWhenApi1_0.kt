@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !API_VERSION: 1.0
 // !DIAGNOSTICS: -UNUSED_PARAMETER, -UNUSED_VARIABLE, -EXTENSION_SHADOWED_BY_MEMBER
 
@@ -24,12 +25,12 @@ fun local() {
 }
 
 class WithMod {
-    <!DEPRECATED_BINARY_MOD!>operator<!> fun mod(other: WithMod) = this
+    <!NI;DEPRECATED_BINARY_MOD!><!DEPRECATED_BINARY_MOD!>operator<!><!> fun mod(other: WithMod) = this
 
     fun test() {
-        val a = this <!DEPRECATED_BINARY_MOD_AS_REM!>%<!> this
+        val a = <!NI;TYPE_MISMATCH!>this<!> <!DEPRECATED_BINARY_MOD_AS_REM!>%<!> <!NI;TYPE_MISMATCH!>this<!>
         var b = this.mod(this)
-        b <!DEPRECATED_BINARY_MOD_AS_REM!>%=<!> this
+        <!NI;TYPE_MISMATCH!>b<!> <!DEPRECATED_BINARY_MOD_AS_REM!>%=<!> <!NI;TYPE_MISMATCH!>this<!>
     }
 }
 
@@ -38,9 +39,9 @@ fun noOverflow() {
 }
 
 fun builtIns(b: Byte, s: Short) {
-    var a = 1 % 2
-    a %= 3
+    var a = <!NI;CONSTANT_EXPECTED_TYPE_MISMATCH!>1<!> % 2
+    <!NI;DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>a<!> <!NI;ASSIGN_OPERATOR_AMBIGUITY!>%=<!> 3
     1.mod(2)
-    b % s
-    1.0 % 2.0
+    <!NI;TYPE_MISMATCH!>b<!> % <!NI;TYPE_MISMATCH!>s<!>
+    <!NI;CONSTANT_EXPECTED_TYPE_MISMATCH!>1.0<!> % <!NI;CONSTANT_EXPECTED_TYPE_MISMATCH!>2.0<!>
 }

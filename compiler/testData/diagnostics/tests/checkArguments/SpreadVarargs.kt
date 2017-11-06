@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !CHECK_TYPE
 
 fun <T> array1(vararg a : T) = a
@@ -8,31 +9,31 @@ fun main(args : Array<String>) {
     join(1)
     join(1, "2")
     join(1, "2", "3")
-    join(<!NON_VARARG_SPREAD!>*<!>1, "2")
-    join(1, *<!TYPE_MISMATCH!>"2"<!>)
-    join(x = 1, a = <!ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!>"2"<!>)
-    join(x = <!NON_VARARG_SPREAD!>*<!>1, a = *<!TYPE_MISMATCH!>"2"<!>)
+    join(<!NI;NON_VARARG_SPREAD!><!NON_VARARG_SPREAD!>*<!><!>1, "2")
+    join(1, *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>"2"<!><!>)
+    join(x = 1, a = <!NI;ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!><!ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!>"2"<!><!>)
+    join(x = <!NI;NON_VARARG_SPREAD!><!NON_VARARG_SPREAD!>*<!><!>1, a = *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>"2"<!><!>)
     join(x = 1, a = *a)
-    join(x = 1, a = *<!TYPE_MISMATCH!>b<!>)
+    join(x = 1, a = *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>b<!><!>)
     join(1, *a)
-    join(1, *<!TYPE_MISMATCH!>b<!>)
+    join(1, *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>b<!><!>)
     join(1, *a, "3")
-    join(1, *<!TYPE_MISMATCH!>b<!>, "3")
+    join(1, *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>b<!><!>, "3")
     join(1, "4", *a, "3")
-    join(1, "4", *<!TYPE_MISMATCH!>b<!>, "3")
+    join(1, "4", *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>b<!><!>, "3")
     join(1, "4", *a)
     join(1, "4", *a, *a, "3")
-    join(1, "4", *a, *<!TYPE_MISMATCH!>b<!>, "3")
+    join(1, "4", *a, *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>b<!><!>, "3")
     join(a = *a, x = 1)
-    join(a = *<!TYPE_MISMATCH!>b<!>, x = 1)
-    join(a = <!TYPE_MISMATCH, ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!>a<!>, x = 1)
+    join(a = *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>b<!><!>, x = 1)
+    join(a = <!NI;TYPE_MISMATCH!><!NI;ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!><!TYPE_MISMATCH!><!ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!>a<!><!><!><!>, x = 1)
 
     joinG<String>(1, "2")
-    joinG<String>(<!NON_VARARG_SPREAD!>*<!>1, "2")
-    joinG<String>(1, *<!TYPE_MISMATCH!>"2"<!>)
+    joinG<String>(<!NI;NON_VARARG_SPREAD!><!NON_VARARG_SPREAD!>*<!><!>1, "2")
+    joinG<String>(1, *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>"2"<!><!>)
     joinG<String>(x = 1, a = *a)
-    joinG<String>(x = 1, a = <!ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!>"2"<!>)
-    joinG<String>(x = <!NON_VARARG_SPREAD!>*<!>1, a = *<!TYPE_MISMATCH!>"2"<!>)
+    joinG<String>(x = 1, a = <!NI;ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!><!ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!>"2"<!><!>)
+    joinG<String>(x = <!NI;NON_VARARG_SPREAD!><!NON_VARARG_SPREAD!>*<!><!>1, a = *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>"2"<!><!>)
     joinG<String>(1, *a)
     joinG<String>(1, *a, "3")
     joinG<String>(1, "4", *a, "3")
@@ -41,11 +42,11 @@ fun main(args : Array<String>) {
     joinG<String>(a = *a, x = 1)
 
     joinG(1, "2")
-    joinG(<!NON_VARARG_SPREAD!>*<!>1, "2")
-    <!TYPE_INFERENCE_PARAMETER_CONSTRAINT_ERROR!>joinG<!>(1, *<!TYPE_MISMATCH!>"2"<!>)
+    joinG(<!NI;NON_VARARG_SPREAD!><!NON_VARARG_SPREAD!>*<!><!>1, "2")
+    <!TYPE_INFERENCE_PARAMETER_CONSTRAINT_ERROR!>joinG<!>(1, *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>"2"<!><!>)
     joinG(x = 1, a = *a)
-    joinG(x = 1, a = <!ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!>"2"<!>)
-    <!TYPE_INFERENCE_PARAMETER_CONSTRAINT_ERROR!>joinG<!>(x = <!NON_VARARG_SPREAD!>*<!>1, a = *<!TYPE_MISMATCH!>"2"<!>)
+    joinG(x = 1, a = <!NI;ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!><!ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION!>"2"<!><!>)
+    <!TYPE_INFERENCE_PARAMETER_CONSTRAINT_ERROR!>joinG<!>(x = <!NI;NON_VARARG_SPREAD!><!NON_VARARG_SPREAD!>*<!><!>1, a = *<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>"2"<!><!>)
     joinG(1, *a)
     joinG(1, *a, "3")
     joinG(1, "4", *a, "3")
@@ -55,7 +56,7 @@ fun main(args : Array<String>) {
 
     val x1 = joinT(1, "2")
     checkSubtype<String?>(x1)
-    val x2 = joinT(<!NON_VARARG_SPREAD!>*<!>1, "2")
+    val x2 = joinT(<!NI;NON_VARARG_SPREAD!><!NON_VARARG_SPREAD!>*<!><!>1, "2")
     checkSubtype<String?>(x2)
     val x6 = joinT(1, *a)
     checkSubtype<String?>(x6)
@@ -89,6 +90,6 @@ fun <T> joinG(x : Int, vararg a : T) : String {
     return b.toString()
 }
 
-fun <T: Any> joinT(<!UNUSED_PARAMETER!>x<!> : Int, vararg <!UNUSED_PARAMETER!>a<!> : T) : T? {
+fun <T: Any> joinT(<!NI;UNUSED_PARAMETER!><!UNUSED_PARAMETER!>x<!><!> : Int, vararg <!NI;UNUSED_PARAMETER!><!UNUSED_PARAMETER!>a<!><!> : T) : T? {
     return null
 }

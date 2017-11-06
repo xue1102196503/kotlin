@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 package h
 
 interface A<T> {}
@@ -23,12 +24,12 @@ fun test(z: Z) {
 operator fun <T> Z.plus(a: A<T>): A<T> = a
 
 fun test1(z: Z) {
-    id(z <!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>+<!> <!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>newA<!>())
-    val a: A<Z> = z + newA()
-    val b: A<Z> = z.plus(newA())
-    val c: A<Z> = id(z + newA())
-    val d: A<Z> = id(z.plus(newA()))
-    use(a, b, c, d)
+    id(<!NI;TYPE_MISMATCH!>z <!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>+<!> <!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>newA<!>()<!>)
+    <!NI;UNREACHABLE_CODE!>val a: A<Z> = z + newA()<!>
+    <!NI;UNREACHABLE_CODE!>val b: A<Z> = z.plus(newA())<!>
+    <!NI;UNREACHABLE_CODE!>val c: A<Z> = id(z + newA())<!>
+    <!NI;UNREACHABLE_CODE!>val d: A<Z> = id(z.plus(newA()))<!>
+    <!NI;UNREACHABLE_CODE!>use(a, b, c, d)<!>
 }
 
 //comparison operation
@@ -41,7 +42,7 @@ fun test2(z: Z) {
 }
 
 //'equals' operation
-fun Z.<!EXTENSION_SHADOWED_BY_MEMBER!>equals<!>(any: Any): Int { use(any); return 1 }
+fun Z.<!NI;EXTENSION_SHADOWED_BY_MEMBER!><!EXTENSION_SHADOWED_BY_MEMBER!>equals<!><!>(any: Any): Int { use(any); return 1 }
 
 fun test3(z: Z) {
     z == <!TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>newA<!>()

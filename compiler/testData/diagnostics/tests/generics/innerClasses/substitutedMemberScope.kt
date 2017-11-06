@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !CHECK_TYPE
 // !DIAGNOSTICS: -UNUSED_EXPRESSION -UNUSED_PARAMETER
 
@@ -18,8 +19,8 @@ class Outer<E> {
             bar(outerE(), baz())
             bar(instance().outerE(), baz())
 
-            bar(topLevel().Inner<E>().baz(), <!TYPE_MISMATCH!>topLevel().Inner<E>().baz()<!>)
-            bar(<!TYPE_MISMATCH!>topLevel().Inner<E>().foo()<!>, <!TYPE_MISMATCH!>topLevel().Inner<E>().baz()<!>)
+            bar(<!NI;TYPE_MISMATCH!>topLevel().Inner<E>().baz()<!>, <!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>topLevel().Inner<E>().baz()<!><!>)
+            bar(<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>topLevel().Inner<E>().foo()<!><!>, <!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>topLevel().Inner<E>().baz()<!><!>)
 
             setE(foo())
         }
@@ -42,8 +43,8 @@ fun foo() {
     strInt.instance().setE("")
     strInt.instance().outerE().checkType { _<String>() }
 
-    strInt.instance().Inner<Double>().checkType { _<Outer<String>.Inner<Double>>() }
+    strInt.instance().Inner<Double>().checkType { <!NI;UNRESOLVED_REFERENCE_WRONG_RECEIVER!><!NI;DEBUG_INFO_UNRESOLVED_WITH_TARGET!>_<!><!><Outer<String>.Inner<Double>>() }
 
     Outer<String>().setInner(strInt)
-    Outer<CharSequence>().setInner(<!TYPE_MISMATCH!>strInt<!>)
+    Outer<CharSequence>().setInner(<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>strInt<!><!>)
 }

@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !DIAGNOSTICS: -UNUSED_PARAMETER
 
 import kotlin.reflect.KProperty
@@ -23,5 +24,5 @@ class C<R>() {
     operator fun <T> setValue(t: Any?, p: KProperty<*>, x: T) = Unit
 }
 
-var c1: Int by C()
-var c2: Int by <!DELEGATE_SPECIAL_FUNCTION_RETURN_TYPE_MISMATCH!>C<Number>()<!>
+var c1: Int by <!NI;DELEGATE_SPECIAL_FUNCTION_RETURN_TYPE_MISMATCH!>C()<!>
+var c2: Int by <!NI;DELEGATE_SPECIAL_FUNCTION_RETURN_TYPE_MISMATCH!><!DELEGATE_SPECIAL_FUNCTION_RETURN_TYPE_MISMATCH!>C<Number>()<!><!>

@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !LANGUAGE: -RefinedSamAdaptersPriority
 // !CHECK_TYPE
 // FILE: A.java
@@ -12,8 +13,8 @@ public class A {
 // FILE: 1.kt
 fun fn() {}
 fun x(r: Runnable) {
-    A.foo(::fn) checkType { _<String>() }
-    A.foo {} checkType { _<String>() }
+    A.foo(::fn) checkType { <!NI;UNRESOLVED_REFERENCE_WRONG_RECEIVER!><!NI;DEBUG_INFO_UNRESOLVED_WITH_TARGET!>_<!><!><String>() }
+    A.foo {} checkType { <!NI;UNRESOLVED_REFERENCE_WRONG_RECEIVER!><!NI;DEBUG_INFO_UNRESOLVED_WITH_TARGET!>_<!><!><String>() }
 
     A.foo(null) checkType { _<Int>() }
     A.foo(Runnable { }) checkType { _<Int>() }
@@ -27,11 +28,11 @@ fun x(r: Runnable) {
 
     A.bar(r) checkType { _<Int>() }
 
-    A.<!OVERLOAD_RESOLUTION_AMBIGUITY!>bar<!>(null)
+    A.<!NI;OVERLOAD_RESOLUTION_AMBIGUITY!><!OVERLOAD_RESOLUTION_AMBIGUITY!>bar<!><!>(null)
 
     A.bar(null as Runnable?) checkType { _<Int>() }
     A.bar(null as CharSequence?) checkType { _<String>() }
 
     A.bar("") checkType { _<String>() }
-    A.<!NONE_APPLICABLE!>bar<!>(123)
+    A.<!NI;NONE_APPLICABLE!><!NONE_APPLICABLE!>bar<!><!>(123)
 }

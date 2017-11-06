@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !CHECK_TYPE
 interface A<T>
 
@@ -17,8 +18,8 @@ fun test(out: Out<Int>, i: In<Int>, inv: A<Int>) {
     r checkType { _<Int>() }
 
     // T? <: Int => error
-    <!TYPE_INFERENCE_INCORPORATION_ERROR!>doIn<!>(<!TYPE_MISMATCH!>i<!>)
+    <!TYPE_INFERENCE_INCORPORATION_ERROR!>doIn<!>(<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>i<!><!>)
 
     // T? >: Int => error
-    <!TYPE_INFERENCE_INCORPORATION_ERROR!>doA<!>(<!TYPE_MISMATCH!>inv<!>)
+    <!TYPE_INFERENCE_INCORPORATION_ERROR!>doA<!>(<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>inv<!><!>)
 }

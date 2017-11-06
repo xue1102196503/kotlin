@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !CHECK_TYPE
 // !DIAGNOSTICS: -UNUSED_EXPRESSION -UNUSED_PARAMETER
 
@@ -30,8 +31,8 @@ fun main() {
     checkSubtype<Outer<*>.Inner<*>>(outer.bar())
     checkSubtype<Outer<*>.Inner<*>>(outer.Inner<Int>())
 
-    checkSubtype<Outer<CharSequence>.Inner<CharSequence>>(<!TYPE_MISMATCH!>outer.bar()<!>)
-    checkSubtype<Outer<CharSequence>.Inner<CharSequence>>(outer.<!TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH!>Inner()<!>)
+    checkSubtype<Outer<CharSequence>.Inner<CharSequence>>(<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>outer.bar()<!><!>)
+    checkSubtype<Outer<CharSequence>.Inner<CharSequence>>(<!NI;TYPE_MISMATCH!><!NI;TYPE_MISMATCH!>outer.<!TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH!>Inner()<!><!><!>)
 
     outer.set(outer.bar())
     outer.set(outer.Inner())

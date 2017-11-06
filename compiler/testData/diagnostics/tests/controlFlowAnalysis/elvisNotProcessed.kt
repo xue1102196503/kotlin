@@ -1,19 +1,20 @@
+// !WITH_NEW_INFERENCE
 // See KT-8277
 
-val v = { true } <!USELESS_ELVIS!>?: ( { true } <!USELESS_ELVIS_ON_LAMBDA_EXPRESSION!>?:<!> null!! )<!>
+val v = { true } <!NI;USELESS_ELVIS!><!USELESS_ELVIS!>?: ( { true } <!NI;USELESS_ELVIS_ON_LAMBDA_EXPRESSION!><!USELESS_ELVIS_ON_LAMBDA_EXPRESSION!>?:<!><!> null!! )<!><!>
 
 val w = if (true) {
     { true }
 }
 else {
-    { true } <!USELESS_ELVIS_ON_LAMBDA_EXPRESSION!>?:<!> null!!
+    { true } <!NI;USELESS_ELVIS_ON_LAMBDA_EXPRESSION!><!USELESS_ELVIS_ON_LAMBDA_EXPRESSION!>?:<!><!> null!!
 }
 
 val ww = if (true) {
-    <!TYPE_MISMATCH!>{ true }<!> <!USELESS_ELVIS_ON_LAMBDA_EXPRESSION!>?:<!> null!!
+    <!TYPE_MISMATCH!>{ true }<!> <!NI;USELESS_ELVIS_ON_LAMBDA_EXPRESSION!><!USELESS_ELVIS_ON_LAMBDA_EXPRESSION!>?:<!><!> null!!
 }
 else if (true) {
-    <!TYPE_MISMATCH!>{ true }<!> <!USELESS_ELVIS_ON_LAMBDA_EXPRESSION!>?:<!> null!!
+    <!TYPE_MISMATCH!>{ true }<!> <!NI;USELESS_ELVIS_ON_LAMBDA_EXPRESSION!><!USELESS_ELVIS_ON_LAMBDA_EXPRESSION!>?:<!><!> null!!
 }
 else {
     null!!
@@ -27,11 +28,11 @@ val b = null ?: ( l() ?: false)
 
 val bb = null ?: ( l() ?: null!!)
 
-val bbb = null ?: ( l() <!USELESS_ELVIS_RIGHT_IS_NULL!>?: null<!>)
+val bbb = null ?: ( l() <!NI;USELESS_ELVIS_RIGHT_IS_NULL!><!USELESS_ELVIS_RIGHT_IS_NULL!>?: null<!><!>)
 
-val bbbb = ( l() <!USELESS_ELVIS_RIGHT_IS_NULL!>?: null<!>) ?: ( l() <!USELESS_ELVIS_RIGHT_IS_NULL!>?: null<!>)
+val bbbb = ( l() <!NI;USELESS_ELVIS_RIGHT_IS_NULL!><!USELESS_ELVIS_RIGHT_IS_NULL!>?: null<!><!>) ?: ( l() <!NI;USELESS_ELVIS_RIGHT_IS_NULL!><!USELESS_ELVIS_RIGHT_IS_NULL!>?: null<!><!>)
 
 fun f(x : Long?): Long {
-    var a = x ?: (<!TYPE_MISMATCH!>fun() {}<!> <!USELESS_ELVIS!>?: <!TYPE_MISMATCH!>fun() {}<!><!>)
+    var a = x ?: (<!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>fun() {}<!><!> <!USELESS_ELVIS!><!NI;USELESS_ELVIS_ON_LAMBDA_EXPRESSION!>?:<!> <!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>fun() {}<!><!><!>)
     return <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>a<!>
 }
