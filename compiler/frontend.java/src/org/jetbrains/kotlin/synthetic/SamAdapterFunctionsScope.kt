@@ -25,6 +25,8 @@ import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptorImpl
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.incremental.components.LookupLocation
+import org.jetbrains.kotlin.incremental.components.LookupTracker
+import org.jetbrains.kotlin.incremental.record
 import org.jetbrains.kotlin.load.java.components.SamConversionResolver
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
@@ -48,11 +50,14 @@ interface SamAdapterExtensionFunctionDescriptor : FunctionDescriptor, SyntheticM
     override val baseDescriptorForSynthetic: FunctionDescriptor
 }
 
+val SAM_LOOKUP_NAME = Name.special("<SAM-CONSTRUCTOR>")
+
 class SamAdapterFunctionsScope(
         storageManager: StorageManager,
         private val languageVersionSettings: LanguageVersionSettings,
         private val samResolver: SamConversionResolver,
-        private val deprecationResolver: DeprecationResolver
+        private val deprecationResolver: DeprecationResolver,
+        private val lookupTracker: LookupTracker
 ) : SyntheticScope {
     private val extensionForFunction = storageManager.createMemoizedFunctionWithNullableValues<FunctionDescriptor, FunctionDescriptor> { function ->
         extensionForFunctionNotCached(function)
@@ -94,6 +99,7 @@ class SamAdapterFunctionsScope(
             for (function in type.memberScope.getContributedFunctions(name, location)) {
                 val extension = extensionForFunction(function.original)?.substituteForReceiverType(type)
                 if (extension != null) {
+                    recordSamLookupsForParameters(function, type, location)
                     if (result == null) {
                         result = SmartList()
                     }
@@ -105,6 +111,12 @@ class SamAdapterFunctionsScope(
             result == null -> emptyList()
             result.size > 1 -> result.toSet()
             else -> result
+        }
+    }
+
+    private fun recordSamLookupsForParameters(function: SimpleFunctionDescriptor, type: KotlinType, location: LookupLocation) {
+        for (valueParameter in function.valueParameters) {
+            recordSamLookupsToClassifier(type.constructor.declarationDescriptor ?: continue, location)
         }
     }
 
@@ -140,7 +152,17 @@ class SamAdapterFunctionsScope(
 
     override fun getSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
         val classifier = scope.getContributedClassifier(name, location) ?: return emptyList()
+        recordSamLookupsToClassifier(classifier, location)
         return getAllSamConstructors(classifier)
+    }
+
+    private fun recordSamLookupsToClassifier(classifier: ClassifierDescriptor, location: LookupLocation?) {
+        if (location == null) return
+        if (classifier !is JavaClassDescriptor || classifier.kind != ClassKind.INTERFACE) return
+        // TODO: We should also record SAM lookups even when the interface is not SAM
+        if (!SingleAbstractMethodUtils.isSamType(classifier.defaultType)) return
+
+        lookupTracker.record(location, classifier, SAM_LOOKUP_NAME)
     }
 
     override fun getSyntheticStaticFunctions(scope: ResolutionScope): Collection<FunctionDescriptor> {
