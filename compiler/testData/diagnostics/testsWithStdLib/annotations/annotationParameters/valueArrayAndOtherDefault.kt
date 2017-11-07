@@ -1,3 +1,5 @@
+// NI_EXPECTED_FILE
+
 // FILE: A.java
 public @interface A {
     String[] value();

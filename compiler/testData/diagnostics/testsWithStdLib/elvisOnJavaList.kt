@@ -1,3 +1,5 @@
+// !WITH_NEW_INFERENCE
+
 // FILE: P.java
 
 import java.util.ArrayList;
@@ -13,5 +15,5 @@ public class P {
 
 fun foo(c: P): MutableList<Int> {
     // Error should be here: see KT-8168 Typechecker fails for platform collection type
-    return c.getList() ?: <!TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH, TYPE_MISMATCH!>listOf()<!>
+    return c.getList() ?: <!NI;TYPE_MISMATCH!><!TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH!><!TYPE_MISMATCH!>listOf()<!><!><!>
 }
