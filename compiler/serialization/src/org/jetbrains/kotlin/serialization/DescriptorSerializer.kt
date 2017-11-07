@@ -71,7 +71,7 @@ class DescriptorSerializer private constructor(
         val builder = ProtoBuf.Class.newBuilder()
 
         val flags = Flags.getClassFlags(
-                hasAnnotations(classDescriptor), classDescriptor.visibility, classDescriptor.modality, classDescriptor.kind,
+                hasAnnotations(classDescriptor), normalizeVisibility(classDescriptor), classDescriptor.modality, classDescriptor.kind,
                 classDescriptor.isInner, classDescriptor.isCompanionObject, classDescriptor.isData, classDescriptor.isExternal,
                 classDescriptor.isExpect
         )
@@ -101,18 +101,26 @@ class DescriptorSerializer private constructor(
             builder.addConstructor(constructorProto(descriptor))
         }
 
-        for (descriptor in sort(DescriptorUtils.getAllDescriptors(classDescriptor.defaultType.memberScope))) {
-            if (descriptor is CallableMemberDescriptor) {
-                if (descriptor.kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE) continue
+        val callableMembers =
+                extension.customClassMembersProducer?.getCallableMembers(classDescriptor)
+                ?: sort(
+                        DescriptorUtils.getAllDescriptors(classDescriptor.defaultType.memberScope)
+                                .filterIsInstance<CallableMemberDescriptor>()
+                )
 
-                when (descriptor) {
-                    is PropertyDescriptor -> builder.addProperty(propertyProto(descriptor))
-                    is FunctionDescriptor -> builder.addFunction(functionProto(descriptor))
-                }
+        for (descriptor in callableMembers) {
+            if (descriptor.kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE) continue
+
+            when (descriptor) {
+                is PropertyDescriptor -> builder.addProperty(propertyProto(descriptor))
+                is FunctionDescriptor -> builder.addFunction(functionProto(descriptor))
             }
         }
 
-        for (descriptor in sort(DescriptorUtils.getAllDescriptors(classDescriptor.unsubstitutedInnerClassesScope))) {
+        val nestedClassifiers =
+                extension.customClassMembersProducer?.getInnerClassifiers(classDescriptor)
+                ?: sort(DescriptorUtils.getAllDescriptors(classDescriptor.unsubstitutedInnerClassesScope))
+        for (descriptor in nestedClassifiers) {
             if (descriptor is TypeAliasDescriptor) {
                 builder.addTypeAlias(typeAliasProto(descriptor))
             }
@@ -168,12 +176,12 @@ class DescriptorSerializer private constructor(
 
         val hasAnnotations = descriptor.annotations.getAllAnnotations().isNotEmpty()
 
-        val propertyFlags = Flags.getAccessorFlags(hasAnnotations, descriptor.visibility, descriptor.modality, false, false, false)
+        val propertyFlags = Flags.getAccessorFlags(hasAnnotations, normalizeVisibility(descriptor), descriptor.modality, false, false, false)
 
         val getter = descriptor.getter
         if (getter != null) {
             hasGetter = true
-            val accessorFlags = getAccessorFlags(getter)
+            val accessorFlags = getAccessorFlags(getter, normalizeVisibility(getter))
             if (accessorFlags != propertyFlags) {
                 builder.getterFlags = accessorFlags
             }
@@ -182,7 +190,7 @@ class DescriptorSerializer private constructor(
         val setter = descriptor.setter
         if (setter != null) {
             hasSetter = true
-            val accessorFlags = getAccessorFlags(setter)
+            val accessorFlags = getAccessorFlags(setter, normalizeVisibility(setter))
             if (accessorFlags != propertyFlags) {
                 builder.setterFlags = accessorFlags
             }
@@ -196,7 +204,7 @@ class DescriptorSerializer private constructor(
         }
 
         val flags = Flags.getPropertyFlags(
-                hasAnnotations, descriptor.visibility, descriptor.modality, descriptor.kind, descriptor.isVar,
+                hasAnnotations, normalizeVisibility(descriptor), descriptor.modality, descriptor.kind, descriptor.isVar,
                 hasGetter, hasSetter, hasConstant, descriptor.isConst, descriptor.isLateInit, descriptor.isExternal,
                 @Suppress("DEPRECATION") descriptor.isDelegated, descriptor.isExpect
         )
@@ -240,13 +248,20 @@ class DescriptorSerializer private constructor(
         return builder
     }
 
+    private fun normalizeVisibility(descriptor: DeclarationDescriptorWithVisibility) =
+            // It can be necessary for Java classes serialization having package-private visibility
+            if (extension.shouldUseNormalizedVisibility())
+                descriptor.visibility.normalize()
+            else
+                descriptor.visibility
+
     fun functionProto(descriptor: FunctionDescriptor): ProtoBuf.Function.Builder {
         val builder = ProtoBuf.Function.newBuilder()
 
         val local = createChildSerializer(descriptor)
 
         val flags = Flags.getFunctionFlags(
-                hasAnnotations(descriptor), descriptor.visibility, descriptor.modality, descriptor.kind, descriptor.isOperator,
+                hasAnnotations(descriptor), normalizeVisibility(descriptor), descriptor.modality, descriptor.kind, descriptor.isOperator,
                 descriptor.isInfix, descriptor.isInline, descriptor.isTailrec, descriptor.isExternal, descriptor.isSuspend,
                 descriptor.isExpect
         )
@@ -308,7 +323,7 @@ class DescriptorSerializer private constructor(
 
         val local = createChildSerializer(descriptor)
 
-        val flags = Flags.getConstructorFlags(hasAnnotations(descriptor), descriptor.visibility, !descriptor.isPrimary)
+        val flags = Flags.getConstructorFlags(hasAnnotations(descriptor), normalizeVisibility(descriptor), !descriptor.isPrimary)
         if (flags != builder.flags) {
             builder.flags = flags
         }
@@ -344,7 +359,7 @@ class DescriptorSerializer private constructor(
         val builder = ProtoBuf.TypeAlias.newBuilder()
         val local = createChildSerializer(descriptor)
 
-        val flags = Flags.getTypeAliasFlags(hasAnnotations(descriptor), descriptor.visibility)
+        val flags = Flags.getTypeAliasFlags(hasAnnotations(descriptor), normalizeVisibility(descriptor))
         if (flags != builder.flags) {
             builder.flags = flags
         }
@@ -704,10 +719,10 @@ class DescriptorSerializer private constructor(
             return serializer
         }
 
-        private fun getAccessorFlags(accessor: PropertyAccessorDescriptor): Int {
+        private fun getAccessorFlags(accessor: PropertyAccessorDescriptor, normalizedVisibility: Visibility): Int {
             return Flags.getAccessorFlags(
                     hasAnnotations(accessor),
-                    accessor.visibility,
+                    normalizedVisibility,
                     accessor.modality,
                     !accessor.isDefault,
                     accessor.isExternal,
