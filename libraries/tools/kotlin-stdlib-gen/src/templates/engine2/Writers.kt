@@ -109,9 +109,10 @@ fun main(args: Array<String>) {
             Generators,
             StringJoinOps,
             SequenceOps,
+            RangeOps,
             Numeric,
-            Arrays,
-            templateGroupOf(f_downTo)
+            ComparableOps,
+            Arrays
     )
 
 //  Expected order:
