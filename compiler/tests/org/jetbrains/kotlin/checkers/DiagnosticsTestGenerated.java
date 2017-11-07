@@ -10637,6 +10637,12 @@ public class DiagnosticsTestGenerated extends AbstractDiagnosticsTest {
                     String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/inference/capturedTypes/starProjectionRegression.kt");
                     doTest(fileName);
                 }
+
+                @TestMetadata("subclassWithCapturedStar.kt")
+                public void testSubclassWithCapturedStar() throws Exception {
+                    String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/inference/capturedTypes/subclassWithCapturedStar.kt");
+                    doTest(fileName);
+                }
             }
 
             @TestMetadata("compiler/testData/diagnostics/tests/inference/commonSystem")
