@@ -12,7 +12,7 @@
 
 annotation class Ann(vararg val s: String)
 
-@Ann(s = <!NI;TYPE_MISMATCH!>arrayOf()<!>)
+@Ann(s = arrayOf())
 fun test1() {}
 
 @Ann(s = <!NI;TYPE_MISMATCH!><!TYPE_MISMATCH!>intArrayOf()<!><!>)
@@ -27,7 +27,7 @@ fun test4() {}
 @Ann(s = ["value"])
 fun test5() {}
 
-@JavaAnn(value = <!NI;TYPE_MISMATCH!>arrayOf("value")<!>)
+@JavaAnn(value = arrayOf("value"))
 fun jTest1() {}
 
 @JavaAnn(value = ["value"])
@@ -39,8 +39,8 @@ fun jTest3() {}
 
 annotation class IntAnn(vararg val i: Int)
 
-@IntAnn(i = <!NI;TYPE_MISMATCH!>[1, 2]<!>)
+@IntAnn(i = [1, 2])
 fun foo1() {}
 
-@IntAnn(i = <!NI;TYPE_MISMATCH!>intArrayOf(0)<!>)
+@IntAnn(i = intArrayOf(0))
 fun foo2() {}
