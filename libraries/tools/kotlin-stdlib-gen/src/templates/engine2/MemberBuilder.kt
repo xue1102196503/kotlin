@@ -56,6 +56,8 @@ class MemberBuilder(
     var deprecate: Deprecation? = null; private set
     var since: String? = null; private set
     var platformName: String? = null; private set
+    @Deprecated("Use platforms when building template")
+    var jvmOnly: Boolean = false
 
     var visibility: String? = null; private set
     var external: Boolean = false; private set
@@ -321,6 +323,11 @@ class MemberBuilder(
         if (inline == Inline.Only) {
             builder.append("@kotlin.internal.InlineOnly").append('\n')
         }
+
+        if (jvmOnly) {
+            builder.append("@kotlin.jvm.JvmVersion").append('\n')
+        }
+
 
         listOfNotNull(
                 visibility ?: "public",
