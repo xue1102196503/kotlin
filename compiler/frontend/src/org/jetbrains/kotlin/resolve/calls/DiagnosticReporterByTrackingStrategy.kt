@@ -56,6 +56,11 @@ class DiagnosticReporterByTrackingStrategy(
             NoValueForParameter::class.java -> tracingStrategy.noValueForParameter(trace, (diagnostic as NoValueForParameter).parameterDescriptor)
             InstantiationOfAbstractClass::class.java -> tracingStrategy.instantiationOfAbstractClass(trace)
             AbstractSuperCall::class.java -> tracingStrategy.abstractSuperCall(trace)
+            OnlyInputTypesViolationDiagnostic::class.java -> {
+                val actualDiagnostic = diagnostic as OnlyInputTypesViolationDiagnostic
+                val reportOn = with(psiKotlinCall.psiCall) { calleeExpression ?: callElement }
+                trace.report(TYPE_INFERENCE_ONLY_INPUT_TYPES.on(reportOn, actualDiagnostic.typeParameter))
+            }
         }
     }
 

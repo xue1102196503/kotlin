@@ -24,7 +24,9 @@ import org.jetbrains.kotlin.resolve.calls.inference.components.KotlinConstraintS
 import org.jetbrains.kotlin.resolve.calls.inference.components.NewTypeSubstitutor
 import org.jetbrains.kotlin.resolve.calls.inference.components.ResultTypeResolver
 import org.jetbrains.kotlin.resolve.calls.model.KotlinCallDiagnostic
+import org.jetbrains.kotlin.resolve.calls.model.OnlyInputTypesViolationDiagnostic
 import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
+import org.jetbrains.kotlin.resolve.descriptorUtil.hasOnlyInputTypesAnnotation
 import org.jetbrains.kotlin.types.IntersectionTypeConstructor
 import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.UnwrappedType
@@ -214,6 +216,9 @@ class NewConstraintSystemImpl(
         checkState(State.BUILDING, State.COMPLETION)
 
         val actualResultType = eliminateSpecialIntersectionType(variable, resultType) ?: resultType
+
+        checkOnlyInputTypes(variable, actualResultType)
+
         constraintInjector.addInitialEqualityConstraint(this, variable.defaultType, actualResultType, FixVariableConstraintPosition(variable))
         notFixedTypeVariables.remove(variable.freshTypeConstructor)
 
@@ -224,6 +229,20 @@ class NewConstraintSystemImpl(
         }
 
         storage.fixedTypeVariables[variable.freshTypeConstructor] = actualResultType
+    }
+
+    private fun checkOnlyInputTypes(variable: NewTypeVariable, resultType: UnwrappedType) {
+        if (variable !is TypeVariableFromCallableDescriptor || !variable.originalTypeParameter.hasOnlyInputTypesAnnotation()) return
+
+        val constraints = storage.notFixedTypeVariables[variable.freshTypeConstructor]?.constraints ?: return
+        val applicableResult = constraints.any { it.isFromInputType() && it.type == resultType }
+        if (!applicableResult) {
+            addError(OnlyInputTypesViolationDiagnostic(variable.originalTypeParameter))
+        }
+    }
+
+    private fun Constraint.isFromInputType(): Boolean {
+        return true
     }
 
     private fun eliminateSpecialIntersectionType(variable: NewTypeVariable, type: UnwrappedType): UnwrappedType? {

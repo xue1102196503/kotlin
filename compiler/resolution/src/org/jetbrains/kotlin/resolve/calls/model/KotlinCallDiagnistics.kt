@@ -18,6 +18,7 @@ package org.jetbrains.kotlin.resolve.calls.model
 
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.resolve.calls.components.CallableReferenceCandidate
 import org.jetbrains.kotlin.resolve.calls.tower.ResolutionCandidateApplicability.*
@@ -165,6 +166,12 @@ class SuperAsExtensionReceiver(val receiver: SimpleKotlinCallArgument) : KotlinC
 class SpreadArgumentToNonVarargParameter(val argument: KotlinCallArgument) : KotlinCallDiagnostic(RUNTIME_ERROR) {
     override fun report(reporter: DiagnosticReporter) {
         reporter.onCallArgument(argument, this)
+    }
+}
+
+class OnlyInputTypesViolationDiagnostic(val typeParameter: TypeParameterDescriptor) : KotlinCallDiagnostic(INAPPLICABLE) {
+    override fun report(reporter: DiagnosticReporter) {
+        reporter.onCall(this)
     }
 }
 
