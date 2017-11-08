@@ -105,6 +105,7 @@ fun main(args: Array<String>) {
             Filtering,
             Ordering,
             Snapshots,
+            Mapping,
             SetOps,
             Aggregates,
             Guards,
