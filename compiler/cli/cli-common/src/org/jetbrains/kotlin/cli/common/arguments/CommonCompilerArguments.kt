@@ -108,7 +108,7 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
 
     @Argument(
             value = "-Xnew-inference",
-            description = "Enable experimental new type inference"
+            description = "Enable new experimental generic type inference algorithm"
     )
     var newInference: Boolean by FreezableVar(false)
 
