@@ -104,6 +104,7 @@ fun main(args: Array<String>) {
             Elements,
             Filtering,
             Ordering,
+            ArrayOps,
             Snapshots,
             Mapping,
             SetOps,
@@ -115,29 +116,29 @@ fun main(args: Array<String>) {
             RangeOps,
             Numeric,
             ComparableOps,
-            Arrays
+            CommonArrays,
+            PlatformSpecialized,
+            PlatformSpecializedJS
     )
 
-//  Expected order:
-//                    ::elements,
-//                    ::filtering,
-//                    ::ordering,
-//                    ::arrays,
-//                    ::snapshots,
-//                    ::mapping,
-//                    ::sets,
-//                    ::aggregates,
-//                    ::guards,
-//                    ::generators,
-//                    ::strings,
-//                    ::sequences,
-//                    ::ranges,
-//                    ::numeric,
-//                    ::comparables,
-//                    CommonArrays::templates
+    require(args.size == 1) { "Expecting Kotlin project home path as an argument" }
+    val baseDir = File(args.first())
 
+    fun File.resolveExistingDir(subpath: String) = resolve(subpath).also {
+        require(it.isDirectory) { "Directory $it doesn't exist"}
+    }
+
+    val commonDir = baseDir.resolveExistingDir("libraries/stdlib/common/src/generated")
+    val jvmDir = baseDir.resolveExistingDir("libraries/stdlib/src/generated")
+    val jsDir = baseDir.resolveExistingDir("js/js.libraries/src/core/generated")
 
     templateGroups.groupByFileAndWrite { (platform, source) ->
-        File("build/out/$platform/$source.kt")
+        //        File("build/out/$platform/$source.kt")
+        when (platform) {
+            Platform.Common -> commonDir.resolve("_${source.name.capitalize()}.kt")
+            Platform.JVM -> jvmDir.resolve("_${source.name.capitalize()}.kt")
+            Platform.JS -> jsDir.resolve("_${source.name.capitalize()}Js.kt")
+            Platform.Native -> error("Native is unsupported yet")
+        }
     }
 }
