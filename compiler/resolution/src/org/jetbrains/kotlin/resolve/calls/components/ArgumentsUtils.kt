@@ -74,6 +74,7 @@ private fun KotlinCallArgument.isArrayOrArrayLiteral(): Boolean {
     if (this is CollectionLiteralKotlinCallArgument) return true
     if (this !is SimpleKotlinCallArgument) return false
 
+    // note that for id(arrayOf(1)) type will be `T`, this is not critical for now because we are in annotations
     val type = this.receiver.receiverValue.type
     return KotlinBuiltIns.isArrayOrPrimitiveArray(type)
 }
