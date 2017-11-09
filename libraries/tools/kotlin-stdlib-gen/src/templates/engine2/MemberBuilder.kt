@@ -44,6 +44,10 @@ class MemberBuilder(
     lateinit var keyword: Keyword    // fun/val/var
     lateinit var signature: String   // name and params
 
+    var sortingSignature: String? = null
+        get() = field ?: signature
+        private set
+
     val f get() = family
 
     private val legacyMode = true
@@ -96,7 +100,10 @@ class MemberBuilder(
     fun receiver(value: String) { customReceiver = value }
     @Deprecated("Use receiver()", ReplaceWith("receiver(value)"))
     fun customReceiver(value: String) = receiver(value)
-    fun signature(value: String) { signature = value }
+    fun signature(value: String, notForSorting: Boolean = false) {
+        if (notForSorting) sortingSignature = signature
+        signature = value
+    }
     fun returns(type: String) { returns = type }
     @Deprecated("Use specialFor", ReplaceWith("specialFor(*fs) { returns(run(valueBuilder)) }"))
     fun returns(vararg fs: Family, valueBuilder: () -> String) = specialFor(*fs) { returns(run(valueBuilder)) }

@@ -37,7 +37,7 @@ fun Sequence<TemplateGroup>.groupByFileAndWrite(
     flatMap { group ->
         group.invoke()
                 .flatMap { it.instantiate(platformsToGenerate) }
-                .sortedBy { it.signature }
+                .sortedBy { it.sortingSignature }
     }.groupByFileAndWrite(fileNameBuilder)
 }
 
