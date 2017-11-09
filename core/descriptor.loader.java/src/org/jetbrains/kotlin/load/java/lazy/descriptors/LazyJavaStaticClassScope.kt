@@ -38,7 +38,7 @@ class LazyJavaStaticClassScope(
         c: LazyJavaResolverContext,
         private val jClass: JavaClass,
         override val ownerDescriptor: LazyJavaClassDescriptor
-) : LazyJavaStaticScope(c) {
+) : LazyJavaStaticScope(c), JavaClassScope {
 
     override fun computeMemberIndex() = ClassDeclaredMemberIndex(jClass) { it.isStatic }
 

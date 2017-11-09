@@ -63,7 +63,7 @@ class LazyJavaClassMemberScope(
         c: LazyJavaResolverContext,
         override val ownerDescriptor: ClassDescriptor,
         private val jClass: JavaClass
-) : LazyJavaScope(c) {
+) : LazyJavaScope(c), JavaClassScope {
 
     override fun computeMemberIndex() = ClassDeclaredMemberIndex(jClass, { !it.isStatic })
 
