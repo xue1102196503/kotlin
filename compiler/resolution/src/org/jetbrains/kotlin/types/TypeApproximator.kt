@@ -203,7 +203,7 @@ class TypeApproximator {
         val baseSuperType = when (supertypes.size) {
             0 -> type.builtIns.nullableAnyType // Let C = in Int, then superType for C and C? is Any?
             1 -> supertypes.single()
-            else -> intersectTypes(supertypes)
+            else -> type.constructor.projection.type.unwrap()
         }
         val baseSubType = type.lowerType ?: type.builtIns.nothingType
 
