@@ -26,13 +26,13 @@ import java.util.regex.Pattern
 const val LANGUAGE_DIRECTIVE = "LANGUAGE"
 const val API_VERSION_DIRECTIVE = "API_VERSION"
 
-class CompilerTestLanguageVersionSettings(
-        languageFeatures: Map<LanguageFeature, LanguageFeature.State>,
+data class CompilerTestLanguageVersionSettings(
+        private val initialLanguageFeatures: Map<LanguageFeature, LanguageFeature.State>,
         override val apiVersion: ApiVersion,
         override val languageVersion: LanguageVersion,
         private val analysisFlags: Map<AnalysisFlag<*>, Any?> = emptyMap()
 ) : LanguageVersionSettings {
-    private val languageFeatures = languageFeatures + specificFeaturesForTests()
+    private val languageFeatures = initialLanguageFeatures + specificFeaturesForTests()
     private val delegate = LanguageVersionSettingsImpl(languageVersion, apiVersion)
 
     override fun getFeatureSupport(feature: LanguageFeature): LanguageFeature.State =
