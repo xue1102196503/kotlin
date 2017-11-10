@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.codegen.optimization.transformer.MethodTransformer
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
+import org.jetbrains.kotlin.util.ReturnsCheck
 import org.jetbrains.kotlin.utils.sure
 import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.MethodVisitor
@@ -77,6 +78,8 @@ class CoroutineTransformerMethodVisitor(
         FixStackMethodTransformer().transform(containingClassInternalName, methodNode)
 
         if (isForNamedFunction) {
+            ReturnUnitMethodTransformer.transform(containingClassInternalName, methodNode)
+
             if (allSuspensionPointsAreTailCalls(containingClassInternalName, methodNode, suspensionPoints)) {
                 dropSuspensionMarkers(methodNode, suspensionPoints)
                 return

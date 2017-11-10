@@ -106,6 +106,7 @@ import static org.jetbrains.kotlin.codegen.AsmUtil.*;
 import static org.jetbrains.kotlin.codegen.CodegenUtilKt.*;
 import static org.jetbrains.kotlin.codegen.JvmCodegenUtil.*;
 import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.*;
+import static org.jetbrains.kotlin.codegen.coroutines.CoroutineCodegenUtilKt.unwrapInitialDescriptorForSuspendFunction;
 import static org.jetbrains.kotlin.codegen.inline.InlineCodegenUtilsKt.*;
 import static org.jetbrains.kotlin.resolve.BindingContext.*;
 import static org.jetbrains.kotlin.resolve.BindingContextUtils.getDelegationConstructorCall;
@@ -2315,6 +2316,13 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
         callGenerator.genCall(callableMethod, resolvedCall, defaultMaskWasGenerated, this);
 
         if (isSuspendCall) {
+            CallableDescriptor descriptor = resolvedCall.getCandidateDescriptor();
+            KotlinType type = null;
+            if (descriptor instanceof FunctionDescriptor) {
+                type = unwrapInitialDescriptorForSuspendFunction((FunctionDescriptor) descriptor).getReturnType();
+            }
+            if (type != null && KotlinBuiltIns.isUnit(type)) addReturnTypeIsUnitMarker(v);
+
             addSuspendMarker(v, false);
             addInlineMarker(v, false);
         }

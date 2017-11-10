@@ -89,6 +89,9 @@ private const val INLINE_MARKER_BEFORE_SUSPEND_ID = 0
 private const val INLINE_MARKER_AFTER_SUSPEND_ID = 1
 private val INTRINSIC_ARRAY_CONSTRUCTOR_TYPE = AsmUtil.asmTypeByClassId(classId)
 
+internal const val SUSPEND_CALL_MARKER_CLASS_NAME = "kotlin/jvm/internal/SuspendCallMarker"
+internal const val RETURN_TYPE_IS_UNIT_METHOD_NAME = "markReturnTypeIsUnit"
+
 internal fun getMethodNode(
         classData: ByteArray,
         methodName: String,
@@ -420,6 +423,14 @@ internal fun addInlineMarker(v: InstructionAdapter, isStartNotEnd: Boolean) {
     v.visitMethodInsn(
             Opcodes.INVOKESTATIC, INLINE_MARKER_CLASS_NAME,
             if (isStartNotEnd) INLINE_MARKER_BEFORE_METHOD_NAME else INLINE_MARKER_AFTER_METHOD_NAME,
+            "()V", false
+    )
+}
+
+internal fun addReturnTypeIsUnitMarker(v: InstructionAdapter) {
+    v.visitMethodInsn(
+            Opcodes.INVOKESTATIC, SUSPEND_CALL_MARKER_CLASS_NAME,
+            RETURN_TYPE_IS_UNIT_METHOD_NAME,
             "()V", false
     )
 }
