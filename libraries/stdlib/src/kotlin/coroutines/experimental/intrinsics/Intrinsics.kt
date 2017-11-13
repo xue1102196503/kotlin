@@ -55,7 +55,7 @@ public inline suspend fun <T> suspendCoroutineOrReturn(crossinline block: (Conti
 @SinceKotlin("1.2")
 @kotlin.internal.InlineOnly
 public inline suspend fun <T> suspendCoroutineUninterceptedOrReturn(crossinline block: (Continuation<T>) -> Any?): T =
-        throw NotImplementedError("suspendCoroutineUninterceptedOrReturn's implementation is intrinsic")
+        throw NotImplementedError("Implementation of suspendCoroutineUninterceptedOrReturn is intrinsic")
 
 /**
  * Intercept continuation with [ContinuationInterceptor].
@@ -63,7 +63,7 @@ public inline suspend fun <T> suspendCoroutineUninterceptedOrReturn(crossinline 
 @SinceKotlin("1.2")
 @kotlin.internal.InlineOnly
 public inline fun <T> Continuation<T>.intercepted(): Continuation<T> =
-        throw NotImplementedError("intercepted's implementation is intrinsic")
+        throw NotImplementedError("Implementation of intercepted is intrinsic")
 
 /**
  * Continuation context of current coroutine.
