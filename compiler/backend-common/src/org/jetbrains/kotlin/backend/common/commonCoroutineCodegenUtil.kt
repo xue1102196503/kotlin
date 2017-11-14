@@ -36,12 +36,12 @@ val COROUTINE_CONTEXT_FQ_NAME = COROUTINES_INTRINSICS_PACKAGE_FQ_NAME.child(Name
 val SUSPEND_COROUTINE_UNINTERCEPTED_OR_RETURN_NAME = Name.identifier("suspendCoroutineUninterceptedOrReturn")
 
 fun FunctionDescriptor.isBuiltInIntercepted(): Boolean {
-    fun getOriginal() =
+    if (name != INTERCEPTED_NAME) return false
+    val original =
             module.getPackage(COROUTINES_INTRINSICS_PACKAGE_FQ_NAME).memberScope
                     .getContributedFunctions(INTERCEPTED_NAME, NoLookupLocation.FROM_BACKEND)
                     .singleOrNull() as CallableDescriptor
-    if (name != INTERCEPTED_NAME) return false
-    return DescriptorEquivalenceForOverrides.areEquivalent(getOriginal(), this)
+    return DescriptorEquivalenceForOverrides.areEquivalent(original, this)
 }
 
 fun FunctionDescriptor.isBuiltInSuspendCoroutineOrReturn(): Boolean {
@@ -63,9 +63,9 @@ fun FunctionDescriptor.isBuiltInCoroutineContext() =
         (this as? PropertyGetterDescriptor)?.correspondingProperty?.fqNameSafe == COROUTINE_CONTEXT_FQ_NAME
 
 fun FunctionDescriptor.isBuiltInSuspendCoroutineUninterceptedOrReturn(): Boolean {
-    fun getOriginal() = module.getPackage(COROUTINES_INTRINSICS_PACKAGE_FQ_NAME).memberScope
+    if (name != SUSPEND_COROUTINE_UNINTERCEPTED_OR_RETURN_NAME) return false
+    val original = module.getPackage(COROUTINES_INTRINSICS_PACKAGE_FQ_NAME).memberScope
             .getContributedFunctions(SUSPEND_COROUTINE_UNINTERCEPTED_OR_RETURN_NAME, NoLookupLocation.FROM_BACKEND)
             .singleOrNull() as CallableDescriptor
-    if (name != SUSPEND_COROUTINE_UNINTERCEPTED_OR_RETURN_NAME) return false
-    return DescriptorEquivalenceForOverrides.areEquivalent(getOriginal(), this)
+    return DescriptorEquivalenceForOverrides.areEquivalent(original, this)
 }

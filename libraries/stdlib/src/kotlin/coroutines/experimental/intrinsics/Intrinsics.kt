@@ -23,8 +23,8 @@ import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.processBareContinuationResume
 
 /**
- * Obtains the current continuation instance inside suspend functions and either suspend
- * currently running coroutine or return result immediately without suspension.
+ * Obtains the current continuation instance inside suspend functions and either suspends
+ * currently running coroutine or returns result immediately without suspension.
  *
  * If the [block] returns the special [COROUTINE_SUSPENDED] value, it means that suspend function did suspend the execution and will
  * not return any result immediately. In this case, the [Continuation] provided to the [block] shall be invoked at some moment in the
@@ -47,8 +47,8 @@ public inline suspend fun <T> suspendCoroutineOrReturn(crossinline block: (Conti
         throw NotImplementedError("Implementation is intrinsic")
 
 /**
- * Obtains the current continuation instance inside suspend functions and either suspend
- * currently running coroutine or return result immediately without suspension.
+ * Obtains the current continuation instance inside suspend functions and either suspends
+ * currently running coroutine or returns result immediately without suspension.
  *
  * Unlike [suspendCoroutineOrReturn] it does not intercept continuation.
  */
