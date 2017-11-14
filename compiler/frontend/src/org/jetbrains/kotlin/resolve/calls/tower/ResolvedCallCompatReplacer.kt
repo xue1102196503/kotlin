@@ -19,18 +19,17 @@ package org.jetbrains.kotlin.resolve.calls.tower
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
-import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtImplicitThisExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.annotations.argumentValue
 import org.jetbrains.kotlin.resolve.calls.inference.returnTypeOrNothing
 import org.jetbrains.kotlin.resolve.calls.model.ExpressionValueArgument
+import org.jetbrains.kotlin.resolve.calls.model.MutableResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCallImpl
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolutionOldInference.MyCandidate
@@ -41,49 +40,33 @@ import org.jetbrains.kotlin.resolve.scopes.SyntheticScopes
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.SimpleType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
-import org.jetbrains.kotlin.types.typeUtil.supertypes
 import java.lang.IllegalStateException
 
-abstract internal class ResolvedCallCompatReplacer {
-    abstract protected fun replaceWithCompatCallIfNeeded(
+internal object ResolvedCallCompatReplacer {
+    fun replace(
             syntheticScopes: SyntheticScopes,
             candidates: Collection<MyCandidate>
-    ): Collection<MyCandidate>
+    ): Collection<MyCandidate> = candidates.map { replaceCandidate(it, syntheticScopes) }
 
-    companion object {
-        // TODO:
-        internal var replacer: ResolvedCallCompatReplacer = ResolverCallCompatReplacerImpl()
+    private fun replaceCandidate(
+            candidate: MyCandidate,
+            syntheticScopes: SyntheticScopes): MyCandidate {
+        val call = candidate.resolvedCall
+        val receiver = call.dispatchReceiver ?: return candidate
+        val resolvedCall = candidate.resolvedCall
+        val callDescriptor = resolvedCall.candidateDescriptor ?: return candidate
+        val receiverDescriptor = receiver.type.constructor.declarationDescriptor as? ClassDescriptor ?: return candidate
+        val compatClasses = findCompatClasses(receiverDescriptor)
 
-        internal fun replace(
-                syntheticScopes: SyntheticScopes,
-                candidates: Collection<MyCandidate>
-        ): Collection<MyCandidate> {
-            return replacer.replaceWithCompatCallIfNeeded(syntheticScopes, candidates)
-        }
+        // Find appropriate compat class/method and replace the call
+        return compatClasses
+                       .mapNotNull { (origin, compat) -> findCompatMethod(compat, callDescriptor, syntheticScopes, origin, receiver) }
+                       .map { MyCandidate(candidate.diagnostics, createResolvedCall(callDescriptor, it, resolvedCall, receiver)) }
+                       .singleOrNull() ?: candidate
     }
-}
-
-internal class ResolverCallCompatReplacerStub : ResolvedCallCompatReplacer() {
-    override fun replaceWithCompatCallIfNeeded(
-            syntheticScopes: SyntheticScopes,
-            candidates: Collection<MyCandidate>
-    ): Collection<MyCandidate> {
-        return candidates
-    }
-}
-
-// All classes and interfaces, annotated with @Compat mapped to their compat companions
-typealias OriginToCompatMap = Map<ClassDescriptor, ClassDescriptor>
-
-internal class ResolverCallCompatReplacerImpl : ResolvedCallCompatReplacer() {
-    private class CompatCandidate(
-            // Call candidate to check
-            val candidate: MyCandidate,
-            val compatClasses: OriginToCompatMap
-    )
 
     private fun findCompatAnnotationOnType(t: KotlinType): AnnotationDescriptor? =
             t.constructor.declarationDescriptor?.annotations?.firstOrNull { it.fqName == annotationFqName }
@@ -91,7 +74,7 @@ internal class ResolverCallCompatReplacerImpl : ResolvedCallCompatReplacer() {
     // Find all compat annotations on the type and its supertypes
     private fun findCompatAnnotations(origin: ClassDescriptor): HashMap<ClassDescriptor, AnnotationDescriptor> {
         val type = origin.defaultType
-        val allTypes = type.supertypes() + type
+        val allTypes = type.constructor.supertypes + type
         val res = hashMapOf<ClassDescriptor, AnnotationDescriptor>()
         for (t in allTypes) {
             val annotation = findCompatAnnotationOnType(t)
@@ -103,23 +86,25 @@ internal class ResolverCallCompatReplacerImpl : ResolvedCallCompatReplacer() {
 
     // Find all compat classes of the type and its supertypes including interfaces
     // TODO: Replace IllegalStateException with error reporting
-    private fun findCompatClasses(origin: ClassDescriptor): OriginToCompatMap {
+    private fun findCompatClasses(origin: ClassDescriptor): Map<ClassDescriptor, ClassDescriptor> {
         val res = hashMapOf<ClassDescriptor, ClassDescriptor>()
         for ((t, annotation) in findCompatAnnotations(origin)) {
             val annotationValue = annotation.argumentValue("value") ?: throw IllegalStateException("Compat annotation must have value")
             val valueString = annotationValue as? String ?: throw IllegalStateException("$annotationValue must be string")
+
             var packageName = ""
             var className = valueString
             if (valueString.contains('.')) {
                 packageName = valueString.substring(0, valueString.lastIndexOf('.'))
                 className = valueString.substring(valueString.lastIndexOf('.') + 1)
             }
-            val compatDescriptor = t.module
-                                           .getPackage(FqName(packageName))
-                                           .memberScope
-                                           .getContributedClassifier(Name.identifier(className), NoLookupLocation.WHEN_FIND_BY_FQNAME) as? ClassDescriptor
-                                   ?: throw IllegalStateException("Compat must be a class")
-            res[t] = compatDescriptor
+
+            res[t] = t.module.getPackage(FqName(packageName))
+                             .memberScope
+                             .getContributedClassifier(
+                                     Name.identifier(className),
+                                     NoLookupLocation.WHEN_FIND_BY_FQNAME
+            ) as? ClassDescriptor ?: throw IllegalStateException("Compat must be a class")
         }
         return res
     }
@@ -142,16 +127,17 @@ internal class ResolverCallCompatReplacerImpl : ResolvedCallCompatReplacer() {
         for (i in call.valueParameters.indices) {
             val j = if (originType != null) i + 1 else i
             if (KotlinTypeChecker.DEFAULT.equalTypes(candidate.valueParameters[j].type, call.valueParameters[i].type)) continue
-            // TODO: Check for sam adapters, not only function type
             if (call.valueParameters[i].type.isFunctionType) {
                 val synthetics = syntheticScopes.scopes.flatMap {
                     if (receiverType == null) it.getSyntheticStaticFunctions(scope)
                     else it.getSyntheticMemberFunctions(listOf(receiverType))
                 }
-                val originFun = synthetics.firstOrNull {
+
+                val originFun = synthetics.singleOrNull {
                     functionSignaturesEqual(call, it, scope, syntheticScopes)
                 } as? SyntheticMemberDescriptor<*> ?: return false
-                val realParam = (originFun.baseDescriptorForSynthetic as? JavaMethodDescriptor)?.valueParameters?.get(i) ?: return false
+
+                val realParam = (originFun.baseDescriptorForSynthetic as? FunctionDescriptor)?.valueParameters?.get(i) ?: return false
                 if (!KotlinTypeChecker.DEFAULT.equalTypes(candidate.valueParameters[j].type, realParam.type)) return false
             }
             else return false
@@ -159,103 +145,95 @@ internal class ResolverCallCompatReplacerImpl : ResolvedCallCompatReplacer() {
         return true
     }
 
-    override fun replaceWithCompatCallIfNeeded(
+    private fun createCall(
+            resolvedCall: MutableResolvedCall<*>,
+            callDescriptor: CallableDescriptor,
+            receiver: ReceiverValue
+    ): Pair<ValueArgument, Call> {
+        // Replace the call
+        val psiFactory = KtPsiFactory(resolvedCall.call.callElement, markGenerated = false)
+        val calleeExpression = psiFactory.createSimpleName(callDescriptor.name.asString())
+
+        val receiverExpr: KtExpression =
+                if (receiver is ExpressionReceiver) receiver.expression
+                else {
+                    val implicitThisDescriptor = (receiver as? ImplicitReceiver)?.declarationDescriptor ?: error("Implicit this might be either class or closure")
+                    when (implicitThisDescriptor) {
+                        is CallableDescriptor -> psiFactory.createImplicitThisExpression(implicitThisDescriptor)
+                        is ClassDescriptor -> psiFactory.createImplicitThisExpression(implicitThisDescriptor)
+                        else -> error("Implicit this might be either class or closure")
+                    }
+                }
+
+        val originValue = CallMaker.makeValueArgument(receiverExpr)
+        val compatCall = CallMaker.makeCall(
+                resolvedCall.call.callElement,
+                null,
+                resolvedCall.call.callOperationNode,
+                calleeExpression,
+                listOf(originValue) + resolvedCall.call.valueArguments
+        )
+        return Pair(originValue, compatCall)
+    }
+
+    private fun createResolvedCall(
+            callDescriptor: CallableDescriptor,
+            compatMethod: CallableDescriptor,
+            resolvedCall: MutableResolvedCall<*>,
+            receiver: ReceiverValue
+    ): ResolvedCallImpl<CallableDescriptor> {
+        val (originValue, compatCall) = createCall(resolvedCall, callDescriptor, receiver)
+        val compatResolverCall = ResolvedCallImpl(
+                compatCall,
+                compatMethod,
+                null,
+                null,
+                ExplicitReceiverKind.NO_EXPLICIT_RECEIVER,
+                resolvedCall.knownTypeParametersSubstitutor,
+                resolvedCall.trace,
+                resolvedCall.tracingStrategy,
+                resolvedCall.dataFlowInfoForArguments
+        )
+
+        compatResolverCall.recordValueArgument(compatMethod.valueParameters.first(), ExpressionValueArgument(originValue))
+
+        resolvedCall.valueArguments.forEach {
+            compatResolverCall.recordValueArgument(compatMethod.valueParameters[it.key.index + 1], it.value)
+        }
+
+        compatResolverCall.setStatusToSuccess()
+        return compatResolverCall
+    }
+
+    private fun findCompatMethod(
+            compat: ClassDescriptor,
+            callDescriptor: CallableDescriptor,
             syntheticScopes: SyntheticScopes,
-            candidates: Collection<MyCandidate>
-    ): Collection<MyCandidate> {
-        val compatCandidates = arrayListOf<CompatCandidate>()
-        for (candidate in candidates) {
-            val call = candidate.resolvedCall
-            val receiver = call.dispatchReceiver ?: continue
-            val receiverDescriptor = receiver.type.constructor.declarationDescriptor as? ClassDescriptor ?: continue
-            val compatClasses = findCompatClasses(receiverDescriptor)
-            if (compatClasses.isNotEmpty()) compatCandidates += CompatCandidate(candidate, compatClasses)
+            origin: ClassDescriptor,
+            receiver: ReceiverValue
+    ): CallableDescriptor? {
+        var compatMethod: CallableDescriptor? = null
+        // Find method in compat class
+        for (compatMethodDescriptor in compat.staticScope.getDescriptorsFiltered { it == callDescriptor.name }) {
+            if (compatMethodDescriptor !is FunctionDescriptor) continue
+            val equalMethods = functionSignaturesEqual(
+                    callDescriptor,
+                    compatMethodDescriptor,
+                    compat.staticScope,
+                    syntheticScopes,
+                    origin.defaultType,
+                    receiver.type
+            )
+            if (!equalMethods) continue
+            compatMethod = syntheticScopes.scopes.flatMap { it.getSyntheticStaticFunctions(compat.staticScope) }.firstOrNull {
+                functionSignaturesEqual(callDescriptor, it, compat.staticScope, syntheticScopes, origin.defaultType)
+            } ?: compatMethodDescriptor
         }
-        if (compatCandidates.isEmpty()) return candidates
-
-        // Calls with appropriate compat
-        val callsToReplace = hashMapOf<MyCandidate, MyCandidate>()
-        // Most of these loops iterate only once. It's OK to let them nest
-        for (compatCandidate in compatCandidates) {
-            val resolvedCall = compatCandidate.candidate.resolvedCall
-            val callDescriptor = resolvedCall.candidateDescriptor ?: continue
-            val receiver = resolvedCall.dispatchReceiver ?: continue
-
-            // Find appropriate compat class/method and replace the call
-            for ((origin, compat) in compatCandidate.compatClasses) {
-                var compatMethod: CallableDescriptor? = null
-                // Find method in compat class
-                for (compatMethodDescriptor in compat.staticScope.getDescriptorsFiltered { it == callDescriptor.name }) {
-                    if (compatMethodDescriptor !is JavaMethodDescriptor) continue
-                    val equalMethods = functionSignaturesEqual(
-                            callDescriptor,
-                            compatMethodDescriptor,
-                            compat.staticScope,
-                            syntheticScopes,
-                            origin.defaultType,
-                            receiver.type
-                    )
-                    if (!equalMethods) continue
-                    compatMethod = syntheticScopes.scopes.flatMap { it.getSyntheticStaticFunctions(compat.staticScope) }.firstOrNull {
-                        functionSignaturesEqual(callDescriptor, it, compat.staticScope, syntheticScopes, origin.defaultType)
-                    } ?: compatMethodDescriptor
-                }
-                if (compatMethod == null) continue
-
-                // Replace the call
-                val psiFactory = KtPsiFactory(resolvedCall.call.callElement, markGenerated = false)
-                val calleeExpression = psiFactory.createSimpleName(callDescriptor.name.asString())
-
-                val receiverExpr: KtExpression =
-                        if (receiver is ExpressionReceiver) receiver.expression
-                        else {
-                            val implicitThisDescriptor = (receiver as? ImplicitReceiver)?.declarationDescriptor ?: continue
-                            when (implicitThisDescriptor) {
-                                is CallableDescriptor -> psiFactory.createImplicitThisExpression(implicitThisDescriptor)
-                                is ClassDescriptor -> psiFactory.createImplicitThisExpression(implicitThisDescriptor)
-                                else -> throw IllegalStateException("Implicit this might be either class or closure")
-                            }
-                        }
-                val originValue = CallMaker.makeValueArgument(receiverExpr)
-                val compatCall = CallMaker.makeCall(
-                        resolvedCall.call.callElement,
-                        null,
-                        resolvedCall.call.callOperationNode,
-                        calleeExpression,
-                        listOf(originValue) + resolvedCall.call.valueArguments
-                )
-                val compatResolverCall = ResolvedCallImpl(
-                        compatCall,
-                        compatMethod,
-                        null,
-                        null,
-                        ExplicitReceiverKind.NO_EXPLICIT_RECEIVER,
-                        resolvedCall.knownTypeParametersSubstitutor,
-                        resolvedCall.trace,
-                        resolvedCall.tracingStrategy,
-                        resolvedCall.dataFlowInfoForArguments
-                )
-                compatResolverCall.recordValueArgument(compatMethod.valueParameters.first(), ExpressionValueArgument(originValue))
-                resolvedCall.valueArguments.forEach {
-                    compatResolverCall.recordValueArgument(compatMethod.valueParameters[it.key.index + 1], it.value)
-                }
-                // TODO: Hack
-                compatResolverCall.setStatusToSuccess()
-                callsToReplace[compatCandidate.candidate] = MyCandidate(compatCandidate.candidate.diagnostics, compatResolverCall)
-            }
-        }
-
-        if (callsToReplace.isEmpty()) return candidates
-
-        val res = arrayListOf<MyCandidate>()
-        for (candidate in candidates) res += callsToReplace[candidate] ?: candidate
-        return res
+        return compatMethod
     }
 
     private fun KtPsiFactory.createImplicitThisExpression(descriptor: CallableDescriptor) = KtImplicitThisExpression(createThisExpression().node, descriptor)
     private fun KtPsiFactory.createImplicitThisExpression(descriptor: ClassDescriptor) = KtImplicitThisExpression(createThisExpression().node, descriptor)
 
-    companion object {
-        private val annotationFqName = FqName("kotlin.annotations.jvm.internal.Compat")
-    }
+    private val annotationFqName = FqName("kotlin.annotations.jvm.internal.Compat")
 }
