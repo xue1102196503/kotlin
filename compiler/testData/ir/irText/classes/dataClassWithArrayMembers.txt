@@ -598,7 +598,8 @@ FILE /dataClassWithArrayMembers.kt
               BRANCH
                 if: CONST Boolean type=kotlin.Boolean value='true'
                 then: CALL 'dataClassArrayMemberHashCode(Any): Int' type=kotlin.Int origin=null
-                  arg0: GET_VAR 'tmp1: Array<Any>?' type=kotlin.Array<kotlin.Any>? origin=null
+                  arg0: TYPE_OP type=kotlin.Array<kotlin.Any> origin=IMPLICIT_NOTNULL typeOperand=kotlin.Array<kotlin.Any>
+                    GET_VAR 'tmp1: Array<Any>?' type=kotlin.Array<kotlin.Any>? origin=null
         RETURN type=kotlin.Nothing from='hashCode(): Int'
           GET_VAR 'tmp0_result: Int' type=kotlin.Int origin=null
     FUN GENERATED_DATA_CLASS_MEMBER public open override fun equals(other: kotlin.Any?): kotlin.Boolean

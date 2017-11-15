@@ -39,7 +39,8 @@ FILE /when.kt
                 <T>: Any
                 $receiver: CALL 'setOf(): Set<Nothing>' type=kotlin.collections.Set<kotlin.Nothing> origin=null
                   <T>: Nothing
-                element: GET_VAR 'tmp0_subject: Any?' type=kotlin.Any? origin=null
+                element: TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                  GET_VAR 'tmp0_subject: Any?' type=kotlin.Any? origin=null
               then: CONST String type=kotlin.String value='nothingness?'
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
@@ -68,7 +69,8 @@ FILE /when.kt
               <T>: Any
               $receiver: CALL 'setOf(): Set<Nothing>' type=kotlin.collections.Set<kotlin.Nothing> origin=null
                 <T>: Nothing
-              element: GET_VAR 'value-parameter x: Any?' type=kotlin.Any? origin=null
+              element: TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                GET_VAR 'value-parameter x: Any?' type=kotlin.Any? origin=null
             then: CONST String type=kotlin.String value='nothingness?'
           BRANCH
             if: CONST Boolean type=kotlin.Boolean value='true'

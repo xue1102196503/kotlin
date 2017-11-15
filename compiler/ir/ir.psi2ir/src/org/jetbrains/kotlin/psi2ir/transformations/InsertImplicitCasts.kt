@@ -17,8 +17,6 @@
 package org.jetbrains.kotlin.psi2ir.transformations
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.builtins.isBuiltinExtensionFunctionalType
-import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.IrField
@@ -27,12 +25,11 @@ import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrTypeOperatorCallImpl
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
-import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.psi2ir.containsNull
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.isError
-import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.upperIfFlexible
 
@@ -173,20 +170,28 @@ class InsertImplicitCasts(val builtIns: KotlinBuiltIns): IrElementTransformerVoi
         val valueType = this.type
 
         return when {
-            KotlinBuiltIns.isUnit(expectedType) ->
-                coerceToUnit()
-            valueType.isNullabilityFlexible() && valueType.containsNull() && !expectedType.containsNull() -> {
-                val nonNullValueType = valueType.upperIfFlexible().makeNotNullable()
-                IrTypeOperatorCallImpl(
-                        startOffset, endOffset, nonNullValueType,
-                        IrTypeOperator.IMPLICIT_NOTNULL, nonNullValueType, this
-                ).cast(expectedType)
-            }
-            KotlinTypeChecker.DEFAULT.isSubtypeOf(valueType.makeNotNullable(), expectedType) ->
-                this
+            KotlinBuiltIns.isUnit(expectedType) -> coerceToUnit()
+
+            valueType.containsNull() && !expectedType.containsNull() ->
+                if (TypeUtils.isTypeParameter(valueType))
+                    IrTypeOperatorCallImpl(
+                            startOffset, endOffset, expectedType,
+                            IrTypeOperator.IMPLICIT_CAST, expectedType, this
+                    )
+                else {
+                    val nonNullValueType = valueType.upperIfFlexible().makeNotNullable()
+                    IrTypeOperatorCallImpl(
+                            startOffset, endOffset, nonNullValueType,
+                            IrTypeOperator.IMPLICIT_NOTNULL, nonNullValueType, this
+                    ).cast(expectedType)
+                }
+
+            KotlinTypeChecker.DEFAULT.isSubtypeOf(valueType.makeNotNullable(), expectedType) -> this
+
             KotlinBuiltIns.isInt(valueType) && notNullableExpectedType.isBuiltInIntegerType() ->
                 IrTypeOperatorCallImpl(startOffset, endOffset, notNullableExpectedType,
                                        IrTypeOperator.IMPLICIT_INTEGER_COERCION, notNullableExpectedType, this)
+
             else ->
                 IrTypeOperatorCallImpl(startOffset, endOffset, expectedType,
                                        IrTypeOperator.IMPLICIT_CAST, expectedType, this)

@@ -17,7 +17,8 @@ FILE /breakContinueInLoopHeader.kt
                   then: BREAK label=null loop.label=L
                 BRANCH
                   if: CONST Boolean type=kotlin.Boolean value='true'
-                  then: GET_VAR 'tmp0_elvis_lhs: Boolean?' type=kotlin.Boolean? origin=null
+                  then: TYPE_OP type=kotlin.Boolean origin=IMPLICIT_NOTNULL typeOperand=kotlin.Boolean
+                    GET_VAR 'tmp0_elvis_lhs: Boolean?' type=kotlin.Boolean? origin=null
   FUN public fun test2(c: kotlin.Boolean?): kotlin.Unit
     VALUE_PARAMETER value-parameter c: kotlin.Boolean?
     BLOCK_BODY
@@ -36,7 +37,8 @@ FILE /breakContinueInLoopHeader.kt
                   then: CONTINUE label=null loop.label=L
                 BRANCH
                   if: CONST Boolean type=kotlin.Boolean value='true'
-                  then: GET_VAR 'tmp0_elvis_lhs: Boolean?' type=kotlin.Boolean? origin=null
+                  then: TYPE_OP type=kotlin.Boolean origin=IMPLICIT_NOTNULL typeOperand=kotlin.Boolean
+                    GET_VAR 'tmp0_elvis_lhs: Boolean?' type=kotlin.Boolean? origin=null
   FUN public fun test3(ss: kotlin.collections.List<kotlin.String>?): kotlin.Unit
     VALUE_PARAMETER value-parameter ss: kotlin.collections.List<kotlin.String>?
     BLOCK_BODY
@@ -57,7 +59,8 @@ FILE /breakContinueInLoopHeader.kt
                       then: CONTINUE label=null loop.label=L
                     BRANCH
                       if: CONST Boolean type=kotlin.Boolean value='true'
-                      then: GET_VAR 'tmp0_elvis_lhs: List<String>?' type=kotlin.collections.List<kotlin.String>? origin=null
+                      then: TYPE_OP type=kotlin.collections.List<kotlin.String> origin=IMPLICIT_NOTNULL typeOperand=kotlin.collections.List<kotlin.String>
+                        GET_VAR 'tmp0_elvis_lhs: List<String>?' type=kotlin.collections.List<kotlin.String>? origin=null
             WHILE label=L2 origin=FOR_LOOP_INNER_WHILE
               condition: CALL 'hasNext(): Boolean' type=kotlin.Boolean origin=FOR_LOOP_HAS_NEXT
                 $this: GET_VAR 'tmp1_iterator: Iterator<String>' type=kotlin.collections.Iterator<kotlin.String> origin=null
@@ -85,7 +88,8 @@ FILE /breakContinueInLoopHeader.kt
                       then: BREAK label=null loop.label=L
                     BRANCH
                       if: CONST Boolean type=kotlin.Boolean value='true'
-                      then: GET_VAR 'tmp0_elvis_lhs: List<String>?' type=kotlin.collections.List<kotlin.String>? origin=null
+                      then: TYPE_OP type=kotlin.collections.List<kotlin.String> origin=IMPLICIT_NOTNULL typeOperand=kotlin.collections.List<kotlin.String>
+                        GET_VAR 'tmp0_elvis_lhs: List<String>?' type=kotlin.collections.List<kotlin.String>? origin=null
             WHILE label=L2 origin=FOR_LOOP_INNER_WHILE
               condition: CALL 'hasNext(): Boolean' type=kotlin.Boolean origin=FOR_LOOP_HAS_NEXT
                 $this: GET_VAR 'tmp1_iterator: Iterator<String>' type=kotlin.collections.Iterator<kotlin.String> origin=null

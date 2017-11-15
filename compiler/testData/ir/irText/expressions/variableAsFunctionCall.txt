@@ -46,7 +46,8 @@ FILE /variableAsFunctionCall.kt
                 BRANCH
                   if: CONST Boolean type=kotlin.Boolean value='true'
                   then: CALL 'k() on String: () -> String' type=() -> kotlin.String origin=null
-                    $receiver: GET_VAR 'tmp0_safe_receiver: String?' type=kotlin.String? origin=null
+                    $receiver: TYPE_OP type=kotlin.String origin=IMPLICIT_NOTNULL typeOperand=kotlin.String
+                      GET_VAR 'tmp0_safe_receiver: String?' type=kotlin.String? origin=null
           WHEN type=kotlin.String? origin=SAFE_CALL
             BRANCH
               if: CALL 'EQEQ(Any?, Any?): Boolean' type=kotlin.Boolean origin=EQEQ
@@ -56,5 +57,5 @@ FILE /variableAsFunctionCall.kt
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
               then: CALL 'invoke(): String' type=kotlin.String origin=null
-                $this: GET_VAR 'tmp1_safe_receiver: (() -> String)?' type=(() -> kotlin.String)? origin=null
-
+                $this: TYPE_OP type=() -> kotlin.String origin=IMPLICIT_NOTNULL typeOperand=() -> kotlin.String
+                  GET_VAR 'tmp1_safe_receiver: (() -> String)?' type=(() -> kotlin.String)? origin=null

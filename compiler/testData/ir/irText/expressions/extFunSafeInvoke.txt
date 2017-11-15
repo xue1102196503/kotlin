@@ -17,6 +17,7 @@ FILE /extFunSafeInvoke.kt
               if: CONST Boolean type=kotlin.Boolean value='true'
               then: CALL 'invoke(Any, Int, String): Unit' type=kotlin.Unit origin=INVOKE
                 $this: GET_VAR 'value-parameter fn: Any.(Int, String) -> Unit' type=kotlin.Any.(kotlin.Int, kotlin.String) -> kotlin.Unit origin=VARIABLE_AS_FUNCTION
-                p1: GET_VAR 'tmp0_safe_receiver: Any?' type=kotlin.Any? origin=null
+                p1: TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                  GET_VAR 'tmp0_safe_receiver: Any?' type=kotlin.Any? origin=null
                 p2: CONST Int type=kotlin.Int value='42'
                 p3: CONST String type=kotlin.String value='Hello'

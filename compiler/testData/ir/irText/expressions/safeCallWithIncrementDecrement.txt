@@ -38,7 +38,8 @@ FILE /safeCallWithIncrementDecrement.kt
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
               then: CALL 'inc(): Int' type=kotlin.Int origin=null
-                $this: GET_VAR 'tmp0_safe_receiver: Int?' type=kotlin.Int? origin=null
+                $this: TYPE_OP type=kotlin.Int origin=IMPLICIT_NOTNULL typeOperand=kotlin.Int
+                  GET_VAR 'tmp0_safe_receiver: Int?' type=kotlin.Int? origin=null
   FUN public operator fun kotlin.Int?.get(index: kotlin.Int): kotlin.Int
     $receiver: VALUE_PARAMETER this@get: Int?
     VALUE_PARAMETER value-parameter index: kotlin.Int
@@ -75,8 +76,9 @@ FILE /safeCallWithIncrementDecrement.kt
                       $receiver: GET_VAR 'tmp1_receiver: C?' type=test.C? origin=null
                   CALL '<set-p>(Int) on C?: Unit' type=kotlin.Unit origin=POSTFIX_INCR
                     $receiver: GET_VAR 'tmp1_receiver: C?' type=test.C? origin=null
-                    value: CALL 'inc() on Int?: Int?' type=kotlin.Int? origin=POSTFIX_INCR
-                      $receiver: GET_VAR 'tmp2: Int' type=kotlin.Int origin=null
+                    value: TYPE_OP type=kotlin.Int origin=IMPLICIT_NOTNULL typeOperand=kotlin.Int
+                      CALL 'inc() on Int?: Int?' type=kotlin.Int? origin=POSTFIX_INCR
+                        $receiver: GET_VAR 'tmp2: Int' type=kotlin.Int origin=null
                   GET_VAR 'tmp2: Int' type=kotlin.Int origin=null
   FUN public fun testArrayAccess(nc: test.C?): kotlin.Unit
     VALUE_PARAMETER value-parameter nc: test.C?
@@ -109,4 +111,3 @@ FILE /safeCallWithIncrementDecrement.kt
             value: CALL 'inc(): Int' type=kotlin.Int origin=POSTFIX_INCR
               $this: GET_VAR 'tmp3: Int' type=kotlin.Int origin=null
           GET_VAR 'tmp3: Int' type=kotlin.Int origin=null
-

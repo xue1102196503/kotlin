@@ -44,7 +44,8 @@ FILE /chainOfSafeCalls.kt
                         BRANCH
                           if: CONST Boolean type=kotlin.Boolean value='true'
                           then: CALL 'foo(): C' type=C origin=null
-                            $this: GET_VAR 'tmp0_safe_receiver: C?' type=C? origin=null
+                            $this: TYPE_OP type=C origin=IMPLICIT_NOTNULL typeOperand=C
+                              GET_VAR 'tmp0_safe_receiver: C?' type=C? origin=null
                   WHEN type=C? origin=SAFE_CALL
                     BRANCH
                       if: CALL 'EQEQ(Any?, Any?): Boolean' type=kotlin.Boolean origin=EQEQ
@@ -54,7 +55,8 @@ FILE /chainOfSafeCalls.kt
                     BRANCH
                       if: CONST Boolean type=kotlin.Boolean value='true'
                       then: CALL 'bar(): C?' type=C? origin=null
-                        $this: GET_VAR 'tmp1_safe_receiver: C?' type=C? origin=null
+                        $this: TYPE_OP type=C origin=IMPLICIT_NOTNULL typeOperand=C
+                          GET_VAR 'tmp1_safe_receiver: C?' type=C? origin=null
               WHEN type=C? origin=SAFE_CALL
                 BRANCH
                   if: CALL 'EQEQ(Any?, Any?): Boolean' type=kotlin.Boolean origin=EQEQ
@@ -64,7 +66,8 @@ FILE /chainOfSafeCalls.kt
                 BRANCH
                   if: CONST Boolean type=kotlin.Boolean value='true'
                   then: CALL 'foo(): C' type=C origin=null
-                    $this: GET_VAR 'tmp2_safe_receiver: C?' type=C? origin=null
+                    $this: TYPE_OP type=C origin=IMPLICIT_NOTNULL typeOperand=C
+                      GET_VAR 'tmp2_safe_receiver: C?' type=C? origin=null
           WHEN type=C? origin=SAFE_CALL
             BRANCH
               if: CALL 'EQEQ(Any?, Any?): Boolean' type=kotlin.Boolean origin=EQEQ
@@ -74,5 +77,5 @@ FILE /chainOfSafeCalls.kt
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
               then: CALL 'foo(): C' type=C origin=null
-                $this: GET_VAR 'tmp3_safe_receiver: C?' type=C? origin=null
-
+                $this: TYPE_OP type=C origin=IMPLICIT_NOTNULL typeOperand=C
+                  GET_VAR 'tmp3_safe_receiver: C?' type=C? origin=null

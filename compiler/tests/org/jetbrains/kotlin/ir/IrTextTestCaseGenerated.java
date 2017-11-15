@@ -851,6 +851,12 @@ public class IrTextTestCaseGenerated extends AbstractIrTextTestCase {
             doTest(fileName);
         }
 
+        @TestMetadata("safeCallAndNullability.kt")
+        public void testSafeCallAndNullability() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/ir/irText/expressions/safeCallAndNullability.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("safeCallWithIncrementDecrement.kt")
         public void testSafeCallWithIncrementDecrement() throws Exception {
             String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/ir/irText/expressions/safeCallWithIncrementDecrement.kt");

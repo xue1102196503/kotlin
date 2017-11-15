@@ -62,7 +62,8 @@ FILE /safeCalls.kt
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
               then: CALL '<get-length>(): Int' type=kotlin.Int origin=GET_PROPERTY
-                $this: GET_VAR 'tmp0_safe_receiver: String?' type=kotlin.String? origin=null
+                $this: TYPE_OP type=kotlin.String origin=IMPLICIT_NOTNULL typeOperand=kotlin.String
+                  GET_VAR 'tmp0_safe_receiver: String?' type=kotlin.String? origin=null
   FUN public fun test2(x: kotlin.String?): kotlin.Int?
     VALUE_PARAMETER value-parameter x: kotlin.String?
     BLOCK_BODY
@@ -79,7 +80,8 @@ FILE /safeCalls.kt
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
               then: CALL 'hashCode(): Int' type=kotlin.Int origin=null
-                $this: GET_VAR 'tmp0_safe_receiver: String?' type=kotlin.String? origin=null
+                $this: TYPE_OP type=kotlin.String origin=IMPLICIT_NOTNULL typeOperand=kotlin.String
+                  GET_VAR 'tmp0_safe_receiver: String?' type=kotlin.String? origin=null
   FUN public fun test3(x: kotlin.String?, y: kotlin.Any?): kotlin.Boolean?
     VALUE_PARAMETER value-parameter x: kotlin.String?
     VALUE_PARAMETER value-parameter y: kotlin.Any?
@@ -97,7 +99,8 @@ FILE /safeCalls.kt
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
               then: CALL 'equals(Any?): Boolean' type=kotlin.Boolean origin=null
-                $this: GET_VAR 'tmp0_safe_receiver: String?' type=kotlin.String? origin=null
+                $this: TYPE_OP type=kotlin.String origin=IMPLICIT_NOTNULL typeOperand=kotlin.String
+                  GET_VAR 'tmp0_safe_receiver: String?' type=kotlin.String? origin=null
                 other: GET_VAR 'value-parameter y: Any?' type=kotlin.Any? origin=null
   FUN public fun test4(x: Ref?): kotlin.Unit
     VALUE_PARAMETER value-parameter x: Ref?
@@ -115,7 +118,8 @@ FILE /safeCalls.kt
           BRANCH
             if: CONST Boolean type=kotlin.Boolean value='true'
             then: CALL '<set-value>(Int): Unit' type=kotlin.Unit origin=EQ
-              $this: GET_VAR 'tmp0_safe_receiver: Ref?' type=Ref? origin=null
+              $this: TYPE_OP type=Ref origin=IMPLICIT_NOTNULL typeOperand=Ref
+                GET_VAR 'tmp0_safe_receiver: Ref?' type=Ref? origin=null
               <set-?>: CONST Int type=kotlin.Int value='0'
   FUN public fun IHost.test5(s: kotlin.String?): kotlin.Int?
     $receiver: VALUE_PARAMETER this@test5: IHost
@@ -135,7 +139,8 @@ FILE /safeCalls.kt
               if: CONST Boolean type=kotlin.Boolean value='true'
               then: CALL 'extLength() on String: Int' type=kotlin.Int origin=null
                 $this: GET_VAR 'this@test5: IHost' type=IHost origin=null
-                $receiver: GET_VAR 'tmp0_safe_receiver: String?' type=kotlin.String? origin=null
+                $receiver: TYPE_OP type=kotlin.String origin=IMPLICIT_NOTNULL typeOperand=kotlin.String
+                  GET_VAR 'tmp0_safe_receiver: String?' type=kotlin.String? origin=null
   FUN public fun kotlin.Int.foo(): kotlin.Int
     $receiver: VALUE_PARAMETER this@foo: Int
     BLOCK_BODY
@@ -157,4 +162,3 @@ FILE /safeCalls.kt
               if: CONST Boolean type=kotlin.Boolean value='true'
               then: CALL 'foo() on Int: Int' type=kotlin.Int origin=null
                 $receiver: GET_VAR 'tmp0_safe_receiver: Int' type=kotlin.Int origin=null
-

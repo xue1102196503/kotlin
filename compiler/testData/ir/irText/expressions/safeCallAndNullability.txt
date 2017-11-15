@@ -1,0 +1,29 @@
+FILE /safeCallAndNullability.kt
+  FUN public fun test(): kotlin.Any?
+    BLOCK_BODY
+      VAR val number: kotlin.Int? = 5
+        CONST Int type=kotlin.Int value='5'
+      RETURN type=kotlin.Nothing from='test(): Any?'
+        BLOCK type=kotlin.Int? origin=SAFE_CALL
+          VAR IR_TEMPORARY_VARIABLE val tmp0_safe_receiver: kotlin.Int?
+            GET_VAR 'number: Int?' type=kotlin.Int? origin=null
+          WHEN type=kotlin.Int? origin=SAFE_CALL
+            BRANCH
+              if: CALL 'EQEQ(Any?, Any?): Boolean' type=kotlin.Boolean origin=EQEQ
+                arg0: GET_VAR 'tmp0_safe_receiver: Int?' type=kotlin.Int? origin=null
+                arg1: CONST Null type=kotlin.Nothing? value='null'
+              then: CONST Null type=kotlin.Nothing? value='null'
+            BRANCH
+              if: CONST Boolean type=kotlin.Boolean value='true'
+              then: CALL 'let((Int) -> Int) on Int: Int' type=kotlin.Int origin=null
+                <T>: Int
+                <R>: Int
+                $receiver: TYPE_OP type=kotlin.Int origin=IMPLICIT_NOTNULL typeOperand=kotlin.Int
+                  GET_VAR 'tmp0_safe_receiver: Int?' type=kotlin.Int? origin=null
+                block: BLOCK type=(kotlin.Int) -> kotlin.Int origin=LAMBDA
+                  FUN LOCAL_FUNCTION_FOR_LAMBDA local final fun <anonymous>(it: kotlin.Int): kotlin.Int
+                    VALUE_PARAMETER value-parameter it: kotlin.Int
+                    BLOCK_BODY
+                      RETURN type=kotlin.Nothing from='<anonymous>(Int): Int'
+                        GET_VAR 'value-parameter it: Int' type=kotlin.Int origin=null
+                  FUNCTION_REFERENCE '<anonymous>(Int): Int' type=(kotlin.Int) -> kotlin.Int origin=LAMBDA

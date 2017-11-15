@@ -81,11 +81,12 @@ FILE /whileDoWhile.kt
           then: BLOCK type=kotlin.Unit origin=null
             WHILE label=null origin=WHILE_LOOP
               condition: TYPE_OP type=kotlin.Boolean origin=IMPLICIT_CAST typeOperand=kotlin.Boolean
-                GET_VAR 'a: Any?' type=kotlin.Any? origin=null
+                TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                  GET_VAR 'a: Any?' type=kotlin.Any? origin=null
               body: BLOCK type=kotlin.Unit origin=null
             BLOCK type=kotlin.Unit origin=null
               DO_WHILE label=null origin=DO_WHILE_LOOP
                 body: COMPOSITE type=kotlin.Unit origin=null
                 condition: TYPE_OP type=kotlin.Boolean origin=IMPLICIT_CAST typeOperand=kotlin.Boolean
-                  GET_VAR 'a: Any?' type=kotlin.Any? origin=null
-
+                  TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                    GET_VAR 'a: Any?' type=kotlin.Any? origin=null

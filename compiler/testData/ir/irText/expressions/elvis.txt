@@ -27,7 +27,8 @@ FILE /elvis.kt
               then: GET_VAR 'value-parameter b: Any' type=kotlin.Any origin=null
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
-              then: GET_VAR 'tmp0_elvis_lhs: Any?' type=kotlin.Any? origin=null
+              then: TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                GET_VAR 'tmp0_elvis_lhs: Any?' type=kotlin.Any? origin=null
   FUN public fun test2(a: kotlin.String?, b: kotlin.Any): kotlin.Any
     VALUE_PARAMETER value-parameter a: kotlin.String?
     VALUE_PARAMETER value-parameter b: kotlin.Any
@@ -44,7 +45,8 @@ FILE /elvis.kt
               then: GET_VAR 'value-parameter b: Any' type=kotlin.Any origin=null
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
-              then: GET_VAR 'tmp0_elvis_lhs: String?' type=kotlin.String? origin=null
+              then: TYPE_OP type=kotlin.String origin=IMPLICIT_NOTNULL typeOperand=kotlin.String
+                GET_VAR 'tmp0_elvis_lhs: String?' type=kotlin.String? origin=null
   FUN public fun test3(a: kotlin.Any?, b: kotlin.Any?): kotlin.String
     VALUE_PARAMETER value-parameter a: kotlin.Any?
     VALUE_PARAMETER value-parameter b: kotlin.Any?
@@ -71,11 +73,13 @@ FILE /elvis.kt
                 arg0: GET_VAR 'tmp0_elvis_lhs: Any?' type=kotlin.Any? origin=null
                 arg1: CONST Null type=kotlin.Nothing? value='null'
               then: TYPE_OP type=kotlin.String origin=IMPLICIT_CAST typeOperand=kotlin.String
-                GET_VAR 'value-parameter b: Any?' type=kotlin.Any? origin=null
+                TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                  GET_VAR 'value-parameter b: Any?' type=kotlin.Any? origin=null
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
               then: TYPE_OP type=kotlin.String origin=IMPLICIT_CAST typeOperand=kotlin.String
-                GET_VAR 'tmp0_elvis_lhs: Any?' type=kotlin.Any? origin=null
+                TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                  GET_VAR 'tmp0_elvis_lhs: Any?' type=kotlin.Any? origin=null
   FUN public fun test4(x: kotlin.Any): kotlin.Any
     VALUE_PARAMETER value-parameter x: kotlin.Any
     BLOCK_BODY
@@ -91,7 +95,8 @@ FILE /elvis.kt
               then: GET_VAR 'value-parameter x: Any' type=kotlin.Any origin=null
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
-              then: GET_VAR 'tmp0_elvis_lhs: Any?' type=kotlin.Any? origin=null
+              then: TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                GET_VAR 'tmp0_elvis_lhs: Any?' type=kotlin.Any? origin=null
   FUN public fun test5(x: kotlin.Any): kotlin.Any
     VALUE_PARAMETER value-parameter x: kotlin.Any
     BLOCK_BODY
@@ -107,5 +112,5 @@ FILE /elvis.kt
               then: GET_VAR 'value-parameter x: Any' type=kotlin.Any origin=null
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
-              then: GET_VAR 'tmp0_elvis_lhs: Any?' type=kotlin.Any? origin=null
-
+              then: TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                GET_VAR 'tmp0_elvis_lhs: Any?' type=kotlin.Any? origin=null

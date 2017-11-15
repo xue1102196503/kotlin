@@ -14,7 +14,8 @@ FILE /bangbang.kt
               then: CALL 'THROW_NPE(): Nothing' type=kotlin.Nothing origin=EXCLEXCL
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
-              then: GET_VAR 'tmp0_notnull: Any?' type=kotlin.Any? origin=null
+              then: TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                GET_VAR 'tmp0_notnull: Any?' type=kotlin.Any? origin=null
   FUN public fun test2(a: kotlin.Any?): kotlin.Int
     VALUE_PARAMETER value-parameter a: kotlin.Any?
     BLOCK_BODY
@@ -33,7 +34,8 @@ FILE /bangbang.kt
                 BRANCH
                   if: CONST Boolean type=kotlin.Boolean value='true'
                   then: CALL 'hashCode(): Int' type=kotlin.Int origin=null
-                    $this: GET_VAR 'tmp0_safe_receiver: Any?' type=kotlin.Any? origin=null
+                    $this: TYPE_OP type=kotlin.Any origin=IMPLICIT_NOTNULL typeOperand=kotlin.Any
+                      GET_VAR 'tmp0_safe_receiver: Any?' type=kotlin.Any? origin=null
           WHEN type=kotlin.Int origin=null
             BRANCH
               if: CALL 'EQEQ(Any?, Any?): Boolean' type=kotlin.Boolean origin=EQEQ
@@ -42,5 +44,5 @@ FILE /bangbang.kt
               then: CALL 'THROW_NPE(): Nothing' type=kotlin.Nothing origin=EXCLEXCL
             BRANCH
               if: CONST Boolean type=kotlin.Boolean value='true'
-              then: GET_VAR 'tmp1_notnull: Int?' type=kotlin.Int? origin=null
-
+              then: TYPE_OP type=kotlin.Int origin=IMPLICIT_NOTNULL typeOperand=kotlin.Int
+                GET_VAR 'tmp1_notnull: Int?' type=kotlin.Int? origin=null

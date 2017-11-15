@@ -46,6 +46,6 @@ FILE /safeAssignment.kt
           BRANCH
             if: CONST Boolean type=kotlin.Boolean value='true'
             then: CALL '<set-x>(Int): Unit' type=kotlin.Unit origin=EQ
-              $this: GET_VAR 'tmp0_safe_receiver: C?' type=C? origin=null
+              $this: TYPE_OP type=C origin=IMPLICIT_NOTNULL typeOperand=C
+                GET_VAR 'tmp0_safe_receiver: C?' type=C? origin=null
               <set-?>: CONST Int type=kotlin.Int value='42'
-
