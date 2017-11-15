@@ -39,9 +39,11 @@ import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.SyntheticScopes
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.SimpleType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import java.lang.IllegalStateException
 
@@ -63,8 +65,9 @@ internal object ResolvedCallCompatReplacer {
 
         // Find appropriate compat class/method and replace the call
         return compatClasses
-                       .mapNotNull { (origin, compat) -> findCompatMethod(compat, callDescriptor, syntheticScopes, origin, receiver) }
-                       .map { MyCandidate(candidate.diagnostics, createResolvedCall(callDescriptor, it, resolvedCall, receiver)) }
+                       .mapNotNull { (compatPrototype, compat) ->
+                           findCompatMethod(compat, callDescriptor, syntheticScopes, compatPrototype.defaultType, receiver)
+                       }.map { MyCandidate(candidate.diagnostics, createResolvedCall(callDescriptor, it, resolvedCall, receiver)) }
                        .singleOrNull() ?: candidate
     }
 
@@ -104,7 +107,7 @@ internal object ResolvedCallCompatReplacer {
                              .getContributedClassifier(
                                      Name.identifier(className),
                                      NoLookupLocation.WHEN_FIND_BY_FQNAME
-            ) as? ClassDescriptor ?: throw IllegalStateException("Compat must be a class")
+                             ) as? ClassDescriptor ?: throw IllegalStateException("Compat must be a class")
         }
         return res
     }
@@ -165,15 +168,15 @@ internal object ResolvedCallCompatReplacer {
                     }
                 }
 
-        val originValue = CallMaker.makeValueArgument(receiverExpr)
+        val compatPrototypeValue = CallMaker.makeValueArgument(receiverExpr)
         val compatCall = CallMaker.makeCall(
                 resolvedCall.call.callElement,
                 null,
                 resolvedCall.call.callOperationNode,
                 calleeExpression,
-                listOf(originValue) + resolvedCall.call.valueArguments
+                listOf(compatPrototypeValue) + resolvedCall.call.valueArguments
         )
-        return Pair(originValue, compatCall)
+        return Pair(compatPrototypeValue, compatCall)
     }
 
     private fun createResolvedCall(
@@ -182,7 +185,7 @@ internal object ResolvedCallCompatReplacer {
             resolvedCall: MutableResolvedCall<*>,
             receiver: ReceiverValue
     ): ResolvedCallImpl<CallableDescriptor> {
-        val (originValue, compatCall) = createCall(resolvedCall, callDescriptor, receiver)
+        val (compatPrototypeValue, compatCall) = createCall(resolvedCall, callDescriptor, receiver)
         val compatResolverCall = ResolvedCallImpl(
                 compatCall,
                 compatMethod,
@@ -195,7 +198,7 @@ internal object ResolvedCallCompatReplacer {
                 resolvedCall.dataFlowInfoForArguments
         )
 
-        compatResolverCall.recordValueArgument(compatMethod.valueParameters.first(), ExpressionValueArgument(originValue))
+        compatResolverCall.recordValueArgument(compatMethod.valueParameters.first(), ExpressionValueArgument(compatPrototypeValue))
 
         resolvedCall.valueArguments.forEach {
             compatResolverCall.recordValueArgument(compatMethod.valueParameters[it.key.index + 1], it.value)
@@ -209,7 +212,7 @@ internal object ResolvedCallCompatReplacer {
             compat: ClassDescriptor,
             callDescriptor: CallableDescriptor,
             syntheticScopes: SyntheticScopes,
-            origin: ClassDescriptor,
+            compatPrototypeType: SimpleType,
             receiver: ReceiverValue
     ): CallableDescriptor? {
         var compatMethod: CallableDescriptor? = null
@@ -221,12 +224,12 @@ internal object ResolvedCallCompatReplacer {
                     compatMethodDescriptor,
                     compat.staticScope,
                     syntheticScopes,
-                    origin.defaultType,
+                    compatPrototypeType,
                     receiver.type
             )
             if (!equalMethods) continue
             compatMethod = syntheticScopes.scopes.flatMap { it.getSyntheticStaticFunctions(compat.staticScope) }.firstOrNull {
-                functionSignaturesEqual(callDescriptor, it, compat.staticScope, syntheticScopes, origin.defaultType)
+                functionSignaturesEqual(callDescriptor, it, compat.staticScope, syntheticScopes, compatPrototypeType)
             } ?: compatMethodDescriptor
         }
         return compatMethod
