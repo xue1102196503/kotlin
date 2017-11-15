@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.SyntheticScopes
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
-import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.KotlinType
@@ -157,18 +156,17 @@ internal object ResolvedCallCompatReplacer {
         val psiFactory = KtPsiFactory(resolvedCall.call.callElement, markGenerated = false)
         val calleeExpression = psiFactory.createSimpleName(callDescriptor.name.asString())
 
-        val receiverExpr: KtExpression =
-                if (receiver is ExpressionReceiver) receiver.expression
+        val compatPrototypeValue  =
+                if (receiver is ExpressionReceiver) CallMaker.makeValueArgument(receiver.expression)
                 else {
                     val implicitThisDescriptor = (receiver as? ImplicitReceiver)?.declarationDescriptor ?: error("Implicit this might be either class or closure")
                     when (implicitThisDescriptor) {
-                        is CallableDescriptor -> psiFactory.createImplicitThisExpression(implicitThisDescriptor)
-                        is ClassDescriptor -> psiFactory.createImplicitThisExpression(implicitThisDescriptor)
+                        is CallableDescriptor -> ImplicitThisValueArgument(resolvedCall.call.callElement, implicitThisDescriptor)
+                        is ClassDescriptor -> ImplicitThisValueArgument(resolvedCall.call.callElement, implicitThisDescriptor)
                         else -> error("Implicit this might be either class or closure")
                     }
                 }
 
-        val compatPrototypeValue = CallMaker.makeValueArgument(receiverExpr)
         val compatCall = CallMaker.makeCall(
                 resolvedCall.call.callElement,
                 null,
@@ -234,9 +232,6 @@ internal object ResolvedCallCompatReplacer {
         }
         return compatMethod
     }
-
-    private fun KtPsiFactory.createImplicitThisExpression(descriptor: CallableDescriptor) = KtImplicitThisExpression(createThisExpression().node, descriptor)
-    private fun KtPsiFactory.createImplicitThisExpression(descriptor: ClassDescriptor) = KtImplicitThisExpression(createThisExpression().node, descriptor)
 
     private val annotationFqName = FqName("kotlin.annotations.jvm.internal.Compat")
 }

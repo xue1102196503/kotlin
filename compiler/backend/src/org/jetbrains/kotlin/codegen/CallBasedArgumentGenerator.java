@@ -18,6 +18,7 @@ package org.jetbrains.kotlin.codegen;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor;
+import org.jetbrains.kotlin.psi.ImplicitThisValueArgument;
 import org.jetbrains.kotlin.psi.KtExpression;
 import org.jetbrains.kotlin.psi.ValueArgument;
 import org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument;
@@ -57,6 +58,11 @@ public class CallBasedArgumentGenerator extends ArgumentGenerator {
         Type type = valueParameterTypes.get(i);
         ValueArgument valueArgument = argument.getValueArgument();
         assert valueArgument != null;
+        if (valueArgument instanceof ImplicitThisValueArgument) {
+            StackValue value = codegen.generateImplicitThisArgumentValue((ImplicitThisValueArgument) valueArgument);
+            value.put(type, codegen.v);
+            return;
+        }
         KtExpression argumentExpression = valueArgument.getArgumentExpression();
         assert argumentExpression != null : valueArgument.asElement().getText();
         callGenerator.genValueAndPut(parameter, argumentExpression, type, i);

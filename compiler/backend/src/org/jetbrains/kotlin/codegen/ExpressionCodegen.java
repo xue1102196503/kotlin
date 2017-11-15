@@ -2564,6 +2564,13 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
     }
 
     @NotNull
+    public StackValue generateImplicitThisArgumentValue(ImplicitThisValueArgument valueArgument) {
+        if (valueArgument.getClassDescriptor() != null) return StackValue.thisOrOuter(this, valueArgument.getClassDescriptor(), false, true);
+        else if (valueArgument.getCallableDescriptor() != null) return generateExtensionReceiver(valueArgument.getCallableDescriptor());
+        else throw new IllegalStateException("Implicit this must be either class or closure");
+    }
+
+    @NotNull
     private StackValue generateScriptReceiver(@NotNull ScriptDescriptor receiver) {
         CodegenContext cur = context;
         StackValue result = StackValue.LOCAL_0;
@@ -4009,12 +4016,6 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
 
     @Override
     public StackValue visitThisExpression(@NotNull KtThisExpression expression, StackValue receiver) {
-        if (expression instanceof KtImplicitThisExpression) {
-            KtImplicitThisExpression expr = ((KtImplicitThisExpression) expression);
-            if (expr.getCallableDescriptor() != null) return generateExtensionReceiver(expr.getCallableDescriptor());
-            if (expr.getClassDescriptor() != null) return StackValue.thisOrOuter(this, expr.getClassDescriptor(), false, true);
-            else throw new IllegalStateException("Implicit this might be either class or closure");
-        }
         DeclarationDescriptor descriptor = bindingContext.get(REFERENCE_TARGET, expression.getInstanceReference());
         if (descriptor instanceof ClassDescriptor) {
             //TODO rewrite with context.lookupInContext()

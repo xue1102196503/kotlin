@@ -16,15 +16,27 @@
 
 package org.jetbrains.kotlin.psi
 
-import com.intellij.lang.ASTNode
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 
-class KtImplicitThisExpression private constructor(
-        astNode: ASTNode,
+class ImplicitThisValueArgument private constructor(
+        private val element: KtElement,
         val callableDescriptor: CallableDescriptor? = null,
         val classDescriptor: ClassDescriptor? = null
-): KtThisExpression(astNode) {
-    constructor(astNode: ASTNode, descriptor: CallableDescriptor): this(astNode, callableDescriptor = descriptor)
-    constructor(astNode: ASTNode, descriptor: ClassDescriptor): this(astNode, classDescriptor = descriptor)
+): ValueArgument {
+    override fun getArgumentExpression(): KtExpression? = null
+
+    override fun getArgumentName(): ValueArgumentName? = null
+
+    override fun isNamed(): Boolean = false
+
+    override fun asElement(): KtElement = element
+
+    override fun getSpreadElement(): LeafPsiElement? = null
+
+    override fun isExternal(): Boolean = false
+
+    constructor(element: KtElement, descriptor: CallableDescriptor): this(element, callableDescriptor = descriptor)
+    constructor(element: KtElement, descriptor: ClassDescriptor): this(element, classDescriptor = descriptor)
 }
