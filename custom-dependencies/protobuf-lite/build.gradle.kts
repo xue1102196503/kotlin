@@ -1,4 +1,3 @@
-
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import java.io.BufferedOutputStream
 import java.io.File
@@ -7,16 +6,6 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.zip.ZipOutputStream
 import org.gradle.language.assembler.tasks.Assemble
-
-buildscript {
-    repositories {
-        jcenter()
-    }
-
-    dependencies {
-        classpath("com.github.jengelman.gradle.plugins:shadow:${property("versions.shadow")}")
-    }
-}
 
 apply { plugin("com.github.johnrengelman.shadow") }
 

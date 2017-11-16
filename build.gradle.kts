@@ -19,8 +19,6 @@ buildscript {
 
     extra["repos"] = repos
 
-    extra["versions.shadow"] = "2.0.1"
-
     repositories {
         for (repo in repos) {
             maven(url = repo)
