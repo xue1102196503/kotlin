@@ -17,9 +17,7 @@
 package org.jetbrains.kotlin.gradle.internal
 
 import com.intellij.openapi.util.io.FileUtil
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.SourceTask
+import org.gradle.api.tasks.*
 import org.gradle.api.tasks.incremental.IncrementalTaskInputs
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.gradle.plugin.kotlinDebug
@@ -43,6 +41,9 @@ open class KaptGenerateStubsTask : KotlinCompile() {
     @get:Internal
     lateinit var generatedSourcesDir: File
 
+    @get:Classpath @get:InputFiles @Suppress("unused")
+    internal val kotlinTaskPluginClasspath get() = kotlinCompileTask.pluginClasspath
+
     override fun source(vararg sources: Any?): SourceTask? {
         return super.source(sourceRootsContainer.add(sources))
     }
@@ -60,7 +61,7 @@ open class KaptGenerateStubsTask : KotlinCompile() {
 
     override fun setupCompilerArgs(args: K2JVMCompilerArguments, defaultsOnly: Boolean) {
         kotlinCompileTask.setupCompilerArgs(args)
-        args.pluginClasspaths = (pluginOptions.classpath + args.pluginClasspaths!!).toSet().toTypedArray()
+        args.pluginClasspaths = (pluginClasspath + args.pluginClasspaths!!).toSet().toTypedArray()
         args.pluginOptions = (pluginOptions.arguments + args.pluginOptions!!).toTypedArray()
         args.verbose = project.hasProperty("kapt.verbose") && project.property("kapt.verbose").toString().toBoolean() == true
         args.classpathAsList = this.compileClasspath.toList()
