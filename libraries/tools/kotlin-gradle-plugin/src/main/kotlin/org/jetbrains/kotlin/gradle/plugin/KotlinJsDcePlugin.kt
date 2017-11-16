@@ -26,6 +26,7 @@ import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.SourceSet
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJsDce
+import org.jetbrains.kotlin.gradle.tasks.cacheableIfSupported
 import java.io.File
 
 class KotlinJsDcePlugin : Plugin<Project> {
@@ -40,7 +41,7 @@ class KotlinJsDcePlugin : Plugin<Project> {
         val kotlinTaskName = sourceSet.getCompileTaskName("kotlin2Js")
         val kotlinTask = project.tasks.findByName(kotlinTaskName) as? Kotlin2JsCompile ?: return
         val dceTaskName = sourceSet.getTaskName(DCE_TASK_PREFIX, TASK_SUFFIX)
-        val dceTask = project.tasks.create(dceTaskName, KotlinJsDce::class.java).also {
+        val dceTask = project.tasks.create(dceTaskName, cacheableIfSupported(KotlinJsDce::class.java, project)).also {
             it.dependsOn(kotlinTask)
             project.tasks.findByName("build")?.dependsOn(it)
         }
