@@ -4,11 +4,11 @@ typealias B = Int
 typealias C = Int
 
 typealias D =
-Int
+        Int
 
 //
 typealias E =
-Int
+        Int
 
 typealias F = Int
 //
