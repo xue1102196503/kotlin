@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.resolve.calls.components
 
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.resolve.calls.inference.NewConstraintSystem
 import org.jetbrains.kotlin.resolve.calls.inference.components.KotlinConstraintSystemCompleter
 import org.jetbrains.kotlin.resolve.calls.inference.components.KotlinConstraintSystemCompleter.ConstraintSystemCompletionMode
@@ -141,7 +142,7 @@ class KotlinCallCompleter(
         val actualType = withSmartCastInfo?.stableType ?: unsubstitutedReturnType
 
         val returnType = resolvedCall.substitutor.substituteKeepAnnotations(actualType)
-        if (expectedType != null && !TypeUtils.noExpectedType(expectedType)) {
+        if (expectedType != null && !TypeUtils.noExpectedType(expectedType) && !canBeCheckedLater(returnType, expectedType)) {
             csBuilder.addSubtypeConstraint(returnType, expectedType, ExpectedTypeConstraintPosition(resolvedCall.atom))
         }
 
@@ -152,4 +153,16 @@ class KotlinCallCompleter(
             ConstraintSystemCompletionMode.PARTIAL
         }
     }
+
+    fun canBeCheckedLater(actualType: UnwrappedType, expectedType: UnwrappedType): Boolean {
+        return actualType.isIntegralType() && expectedType.isIntegralType()
+    }
+
+    private fun UnwrappedType.isIntegralType(): Boolean {
+        return KotlinBuiltIns.isInt(this) ||
+               KotlinBuiltIns.isShort(this) ||
+               KotlinBuiltIns.isByte(this) ||
+               KotlinBuiltIns.isLong(this)
+    }
+
 }
