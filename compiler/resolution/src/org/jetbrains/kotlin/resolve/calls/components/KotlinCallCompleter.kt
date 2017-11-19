@@ -24,8 +24,10 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintStorage
 import org.jetbrains.kotlin.resolve.calls.inference.model.ExpectedTypeConstraintPosition
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.calls.tower.forceResolution
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.UnwrappedType
+import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
 class KotlinCallCompleter(
         private val postponedArgumentsAnalyzer: PostponedArgumentsAnalyzer,
@@ -155,10 +157,10 @@ class KotlinCallCompleter(
     }
 
     fun canBeCheckedLater(actualType: UnwrappedType, expectedType: UnwrappedType): Boolean {
-        return actualType.isIntegralType() && expectedType.isIntegralType()
+        return actualType.makeNotNullable().isIntegralType() && expectedType.makeNotNullable().isIntegralType()
     }
 
-    private fun UnwrappedType.isIntegralType(): Boolean {
+    private fun KotlinType.isIntegralType(): Boolean {
         return KotlinBuiltIns.isInt(this) ||
                KotlinBuiltIns.isShort(this) ||
                KotlinBuiltIns.isByte(this) ||
