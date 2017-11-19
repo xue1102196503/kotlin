@@ -24,7 +24,7 @@ dependencies {
     testCompile(projectTests(":compiler:tests-common-jvm6"))
     testCompile(commonDep("junit:junit"))
     testCompile(ideaSdkCoreDeps("intellij-core"))
-    testCompile(ideaSdkDeps("openapi", "idea", "idea_rt"))
+    testCompile(ideaSdkDeps("openapi", "idea", "idea_rt", "platform-api"))
     testCompile(preloadedDeps("dx", subdir = "android-5.0/lib"))
 }
 
