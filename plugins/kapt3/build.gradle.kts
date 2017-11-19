@@ -11,7 +11,7 @@ dependencies {
     compile(project(":compiler:frontend.java"))
     compile(project(":compiler:plugin-api"))
     testCompile(projectTests(":compiler:tests-common"))
-    testCompile(ideaSdkDeps("idea", "idea_rt", "openapi"))
+    testCompile(ideaSdkDeps("idea", "idea_rt", "openapi", "platform-impl"))
     testCompile(commonDep("junit:junit"))
 }
 
