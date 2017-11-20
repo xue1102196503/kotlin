@@ -2,11 +2,11 @@
 import kotlin.reflect.KProperty
 
 var lastGeneratedId = 0
+val idMap = mutableMapOf<KProperty<*>, Int>()
 
 class MyDelegate(val value: String) {
-    val id = lastGeneratedId
-
     operator fun getValue(receiver: Any?, property: KProperty<*>): String {
+        val id = idMap.getOrPut(property) { lastGeneratedId++ }
         return "${property.name}:$value:$id"
     }
 }
