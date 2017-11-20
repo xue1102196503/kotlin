@@ -338,7 +338,9 @@ open class KotlinCompile : AbstractKotlinCompile<K2JVMCompilerArguments>(), Kotl
         val reporter = GradleICReporter(project.rootProject.projectDir)
 
         val environment = when {
-            !incremental -> GradleCompilerEnvironment(computedCompilerClasspath, messageCollector, outputItemCollector, args)
+            //TODO replace with checking for any file present in taskBuildDirectory once the format check is refactored
+            !incremental || !isCacheFormatUpToDate ->
+                GradleCompilerEnvironment(computedCompilerClasspath, messageCollector, outputItemCollector, args)
             else -> {
                 logger.info(USING_INCREMENTAL_COMPILATION_MESSAGE)
                 val friendTask = friendTaskName?.let { project.tasks.findByName(it) as? KotlinCompile }
@@ -503,7 +505,8 @@ open class Kotlin2JsCompile() : AbstractKotlinCompile<K2JSCompilerArguments>(), 
         val reporter = GradleICReporter(project.rootProject.projectDir)
 
         val environment = when {
-            incremental -> {
+            //TODO replace with checking for any file present in taskBuildDirectory once the format check is refactored
+            incremental && isCacheFormatUpToDate -> {
                 logger.warn(USING_EXPERIMENTAL_JS_INCREMENTAL_COMPILATION_MESSAGE)
                 GradleIncrementalCompilerEnvironment(
                         computedCompilerClasspath, changedFiles, reporter, taskBuildDirectory,
