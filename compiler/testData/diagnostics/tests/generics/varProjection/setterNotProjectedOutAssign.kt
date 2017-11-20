@@ -1,3 +1,4 @@
+// !WITH_NEW_INFERENCE
 // !CHECK_TYPE
 interface Tr<T> {
     var v: Tr<T>
