@@ -181,20 +181,6 @@ public class CheckerTestUtilTest extends KotlinTestWithEnvironment {
                 public void unexpectedDiagnostic(CheckerTestUtil.TextDiagnostic diagnostic, int actualStart, int actualEnd) {
                     actualMessages.add(unexpected(diagnostic.getDescription(), actualStart, actualEnd));
                 }
-
-                @Override
-                public void uncheckedDiagnostic(CheckerTestUtil.TextDiagnostic diagnostic, int expectedStart, int expectedEnd) {
-                }
-
-                @Override
-                public boolean shouldUseDiagnosticsForNI() {
-                    return false;
-                }
-
-                @Override
-                public boolean isWithNewInferenceDirective() {
-                    return false;
-                }
             });
 
             assertEquals(listToString(expectedMessages), listToString(actualMessages));
