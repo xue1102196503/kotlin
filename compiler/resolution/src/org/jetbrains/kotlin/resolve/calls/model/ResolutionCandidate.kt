@@ -68,7 +68,7 @@ class KotlinResolutionCandidate(
         val knownTypeParametersResultingSubstitutor: TypeSubstitutor? = null,
         private val resolutionSequence: List<ResolutionPart> = resolvedCall.atom.callKind.resolutionSequence
 ) : Candidate, KotlinDiagnosticsHolder {
-    val diagnosticsFromResolutionParts = arrayListOf<KotlinCallDiagnostic>()
+    val diagnosticsFromResolutionParts = arrayListOf<KotlinCallDiagnostic>() // this is mutable list! take diagnostics only once
     private var newSystem: NewConstraintSystemImpl? = null
     private var currentApplicability = ResolutionCandidateApplicability.RESOLVED
     private var subResolvedAtoms: MutableList<ResolvedAtom> = arrayListOf()
