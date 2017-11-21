@@ -359,6 +359,7 @@ class JavaSyntheticPropertiesScope(private val storageManager: StorageManager, p
 
         val classifier = type.declarationDescriptor
         if (classifier is ClassDescriptor) {
+            // TODO: Use decorator's getContributedDescriptors
             for (descriptor in classifier.unsubstitutedMemberScope.getContributedDescriptors(DescriptorKindFilter.FUNCTIONS)) {
                 if (descriptor is FunctionDescriptor) {
                     val propertyName = SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(descriptor.getName()) ?: continue

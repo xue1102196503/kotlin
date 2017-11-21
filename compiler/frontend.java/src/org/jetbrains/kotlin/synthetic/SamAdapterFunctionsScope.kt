@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.synthetic
 
-import com.intellij.util.SmartList
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -25,6 +24,7 @@ import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptorImpl
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.incremental.components.LookupLocation
+import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.components.SamConversionResolver
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
@@ -37,25 +37,70 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.DeprecationResolver
 import org.jetbrains.kotlin.resolve.calls.inference.wrapWithCapturingSubstitution
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
+import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.ResolutionScope
 import org.jetbrains.kotlin.resolve.scopes.SyntheticScope
 import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.findCorrespondingSupertype
+import org.jetbrains.kotlin.utils.Printer
 import kotlin.properties.Delegates
 
 interface SamAdapterExtensionFunctionDescriptor : FunctionDescriptor, SyntheticMemberDescriptor<FunctionDescriptor> {
     override val baseDescriptorForSynthetic: FunctionDescriptor
 }
 
-class SamAdapterFunctionsScope(
+// todo: make real decorator
+class SamAdapterFunctionsScopeDecorator(
         storageManager: StorageManager,
+        private val samResolver: SamConversionResolver,
+        private val deprecationResolver: DeprecationResolver,
+        private val type: KotlinType
+) : MemberScope {
+    val memberScope = type.memberScope
+    val functions = storageManager.createMemoizedFunction<Name, List<SimpleFunctionDescriptor>> {
+        doGetFunctions(it)
+    }
+
+    private fun doGetFunctions(name: Name) =
+            memberScope.getContributedFunctions(name, NoLookupLocation.FROM_SYNTHETIC_SCOPE).mapNotNull {
+                wrapFunctionDescriptor(it.original)?.substituteForReceiverType(type)
+            }
+
+    private fun wrapFunctionDescriptor(function: FunctionDescriptor): SimpleFunctionDescriptor? {
+        if (!function.visibility.isVisibleOutside()) return null
+        if (!function.hasJavaOriginInHierarchy()) return null //TODO: should we go into base at all?
+        if (!SingleAbstractMethodUtils.isSamAdapterNecessary(function)) return null
+        if (function.returnType == null) return null
+        if (deprecationResolver.isHiddenInResolution(function)) return null
+        return SamAdapterFunctionsScope.MyFunctionDescriptor.create(function, samResolver)
+    }
+
+    override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> = emptySet()
+
+    override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<SimpleFunctionDescriptor> = functions(name)
+
+    override fun getFunctionNames(): Set<Name> = emptySet()
+
+    override fun getVariableNames(): Set<Name> = emptySet()
+
+    override fun getClassifierNames(): Set<Name>? = null
+
+    override fun printScopeStructure(p: Printer) {}
+
+    override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? = null
+
+    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor>
+            = emptySet()
+}
+class SamAdapterFunctionsScope(
+        private val storageManager: StorageManager,
         private val languageVersionSettings: LanguageVersionSettings,
         private val samResolver: SamConversionResolver,
         private val deprecationResolver: DeprecationResolver
 ) : SyntheticScope {
-    private val extensionForFunction = storageManager.createMemoizedFunctionWithNullableValues<FunctionDescriptor, FunctionDescriptor> { function ->
-        extensionForFunctionNotCached(function)
+    private val decorateScope = storageManager.createMemoizedFunction<KotlinType, MemberScope> {
+        SamAdapterFunctionsScopeDecorator(storageManager, samResolver, deprecationResolver, it)
     }
 
     private val samAdapterForStaticFunction =
@@ -74,58 +119,21 @@ class SamAdapterFunctionsScope(
             }
 
     private val samConstructorForTypeAliasConstructor =
-            storageManager.createMemoizedFunctionWithNullableValues<Pair<ClassConstructorDescriptor, TypeAliasDescriptor>, TypeAliasConstructorDescriptor> {
-                (constructor, typeAliasDescriptor) ->
+            storageManager.createMemoizedFunctionWithNullableValues<Pair<ClassConstructorDescriptor, TypeAliasDescriptor>, TypeAliasConstructorDescriptor> { (constructor, typeAliasDescriptor) ->
                 TypeAliasConstructorDescriptorImpl.createIfAvailable(storageManager, typeAliasDescriptor, constructor)
             }
 
-    private fun extensionForFunctionNotCached(function: FunctionDescriptor): FunctionDescriptor? {
-        if (!function.visibility.isVisibleOutside()) return null
-        if (!function.hasJavaOriginInHierarchy()) return null //TODO: should we go into base at all?
-        if (!SingleAbstractMethodUtils.isSamAdapterNecessary(function)) return null
-        if (function.returnType == null) return null
-        if (deprecationResolver.isHiddenInResolution(function)) return null
-        return MyFunctionDescriptor.create(function, samResolver)
-    }
-
-    override fun getSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
-        var result: SmartList<FunctionDescriptor>? = null
-        for (type in receiverTypes) {
-            for (function in type.memberScope.getContributedFunctions(name, location)) {
-                val extension = extensionForFunction(function.original)?.substituteForReceiverType(type)
-                if (extension != null) {
-                    if (result == null) {
-                        result = SmartList()
-                    }
-                    result.add(extension)
-                }
+    override fun getSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation) =
+            receiverTypes.flatMap { type ->
+                decorateScope(type).getContributedFunctions(name, location)
             }
-        }
-        return when {
-            result == null -> emptyList()
-            result.size > 1 -> result.toSet()
-            else -> result
-        }
-    }
-
-    private fun FunctionDescriptor.substituteForReceiverType(receiverType: KotlinType): FunctionDescriptor? {
-        val containingClass = containingDeclaration as? ClassDescriptor ?: return null
-        val correspondingSupertype = findCorrespondingSupertype(receiverType, containingClass.defaultType) ?: return null
-
-        return substitute(
-                TypeConstructorSubstitution
-                        .create(correspondingSupertype)
-                        .wrapWithCapturingSubstitution(needApproximation = true)
-                        .buildSubstitutor()
-        )
-    }
 
     override fun getSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>): Collection<FunctionDescriptor> {
-        return receiverTypes.flatMapTo(LinkedHashSet<FunctionDescriptor>()) { type ->
+        return receiverTypes.flatMap { type ->
             type.memberScope.getContributedDescriptors(DescriptorKindFilter.FUNCTIONS)
                     .filterIsInstance<FunctionDescriptor>()
-                    .mapNotNull {
-                        extensionForFunction(it.original)?.substituteForReceiverType(type)
+                    .flatMap {
+                        decorateScope(type).getContributedFunctions(it.name, NoLookupLocation.FROM_SYNTHETIC_SCOPE)
                     }
         }
     }
@@ -154,16 +162,15 @@ class SamAdapterFunctionsScope(
     }
 
     override fun getSyntheticConstructor(constructor: ConstructorDescriptor): ConstructorDescriptor? {
-        return when (constructor) {
-            is JavaClassConstructorDescriptor -> createJavaSamAdapterConstructor(constructor)
+        when (constructor) {
+            is JavaClassConstructorDescriptor -> return createJavaSamAdapterConstructor(constructor)
             is TypeAliasConstructorDescriptor -> {
-                val underlyingConstructor = constructor.underlyingConstructorDescriptor
-                if (underlyingConstructor !is JavaClassConstructorDescriptor) return null
+                val underlyingConstructor = constructor.underlyingConstructorDescriptor as? JavaClassConstructorDescriptor ?: return null
                 val underlyingSamConstructor = createJavaSamAdapterConstructor(underlyingConstructor) ?: return null
 
-                samConstructorForTypeAliasConstructor(Pair(underlyingSamConstructor, constructor.typeAliasDescriptor))
+                return samConstructorForTypeAliasConstructor(Pair(underlyingSamConstructor, constructor.typeAliasDescriptor))
             }
-            else -> null
+            else -> return null
         }
     }
 
@@ -214,7 +221,7 @@ class SamAdapterFunctionsScope(
                 classifier, samConstructorForClassifier(classDescriptor), samResolver)
     }
 
-    private class MyFunctionDescriptor(
+    class MyFunctionDescriptor(
             containingDeclaration: DeclarationDescriptor,
             original: SimpleFunctionDescriptor?,
             annotations: Annotations,
@@ -298,4 +305,16 @@ class SamAdapterFunctionsScope(
             return descriptor
         }
     }
+}
+
+private fun FunctionDescriptor.substituteForReceiverType(type: KotlinType): SimpleFunctionDescriptor? {
+    val containingClass = containingDeclaration as? ClassDescriptor ?: return null
+    val correspondingSupertype = findCorrespondingSupertype(type, containingClass.defaultType) ?: return null
+
+    return substitute(
+            TypeConstructorSubstitution
+                    .create(correspondingSupertype)
+                    .wrapWithCapturingSubstitution(needApproximation = true)
+                    .buildSubstitutor()
+    ) as SimpleFunctionDescriptor
 }
