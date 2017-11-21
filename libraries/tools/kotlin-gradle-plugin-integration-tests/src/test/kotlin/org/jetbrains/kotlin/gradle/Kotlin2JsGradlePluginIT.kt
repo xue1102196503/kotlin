@@ -2,7 +2,6 @@ package org.jetbrains.kotlin.gradle
 
 import org.gradle.api.logging.LogLevel
 import org.jetbrains.kotlin.gradle.tasks.USING_EXPERIMENTAL_JS_INCREMENTAL_COMPILATION_MESSAGE
-import org.jetbrains.kotlin.gradle.util.allKotlinFiles
 import org.jetbrains.kotlin.gradle.util.getFileByName
 import org.jetbrains.kotlin.gradle.util.modify
 import org.junit.Test
@@ -223,11 +222,30 @@ class Kotlin2JsGradlePluginIT : BaseGradleIT() {
         val project = Project("kotlin2JsDceProject", "2.10", minLogLevel = LogLevel.INFO)
 
         project.build("runRhino") {
-            println(output)
             assertSuccessful()
             val pathPrefix = "mainProject/build/min"
             assertFileExists("$pathPrefix/exampleapp.js.map")
             assertFileExists("$pathPrefix/examplelib.js.map")
+            assertFileContains("$pathPrefix/exampleapp.js.map", "\"../../src/main/kotlin/exampleapp/main.kt\"")
+        }
+    }
+
+    @Test
+    fun testDceDevMode() {
+        val project = Project("kotlin2JsDceProject", "2.10", minLogLevel = LogLevel.INFO)
+
+        project.setupWorkingDir()
+        File(project.projectDir, "mainProject/build.gradle").modify {
+            it + "\n" +
+            "runDceKotlinJs.dceOptions.devMode = true\n"
+        }
+
+        project.build("runRhino") {
+            assertSuccessful()
+            val pathPrefix = "mainProject/build/min"
+            assertFileExists("$pathPrefix/exampleapp.js.map")
+            assertFileExists("$pathPrefix/examplelib.js.map")
+            assertFileContains("$pathPrefix/exampleapp.js.map", "\"../../src/main/kotlin/exampleapp/main.kt\"")
         }
     }
 
