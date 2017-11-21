@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.synthetic
 
-import com.intellij.util.SmartList
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
@@ -36,7 +35,6 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeFirstWord
 import org.jetbrains.kotlin.utils.Printer
-import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
 import kotlin.properties.Delegates
 
@@ -155,6 +153,7 @@ class JavaSyntheticPropertiesScopeDecorator(private val ownerClass: ClassDescrip
     }
 
     override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> {
+        recordLookup(name, location)
         val property = properties(name)
         return if (property == null) emptyList()
         else listOf(property)
@@ -292,28 +291,13 @@ class JavaSyntheticPropertiesScopeDecorator(private val ownerClass: ClassDescrip
 
 class JavaSyntheticPropertiesScope(private val storageManager: StorageManager, private val lookupTracker: LookupTracker) : SyntheticScope {
     private val decorateScope = storageManager.createMemoizedFunction<ClassDescriptor, MemberScope> {
-        decorateScopeNotCached(it)
+        JavaSyntheticPropertiesScopeDecorator(it, storageManager)
     }
 
-    private fun getSyntheticPropertyAndRecordLookups(classifier: ClassDescriptor, name: Name, location: LookupLocation): PropertyDescriptor? {
-        val scope = decorateScope(classifier)
-        return scope.getContributedVariables(name, location).singleOrNull()
-    }
-
-    private fun decorateScopeNotCached(classDescriptor: ClassDescriptor): MemberScope = JavaSyntheticPropertiesScopeDecorator(classDescriptor, storageManager)
-
-    override fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<PropertyDescriptor> {
-        var result: SmartList<PropertyDescriptor>? = null
-        val processedTypes: MutableSet<TypeConstructor>? = if (receiverTypes.size > 1) HashSet<TypeConstructor>() else null
-        for (type in receiverTypes) {
-            result = collectSyntheticPropertiesByName(result, type.constructor, name, processedTypes, location)
-        }
-        return when {
-            result == null -> emptyList()
-            result.size > 1 -> result.toSet()
-            else -> result
-        }
-    }
+    override fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation) =
+            receiverTypes.traverseClassDescriptorsAndSupertypesOnlyOnce { descriptor ->
+                decorateScope(descriptor).getContributedVariables(name, location).singleOrNull()
+            }
 
     override fun getSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
             = emptyList()
@@ -330,53 +314,30 @@ class JavaSyntheticPropertiesScope(private val storageManager: StorageManager, p
     override fun getSyntheticConstructor(constructor: ConstructorDescriptor): ConstructorDescriptor?
             = null
 
-    private fun collectSyntheticPropertiesByName(result: SmartList<PropertyDescriptor>?, type: TypeConstructor, name: Name, processedTypes: MutableSet<TypeConstructor>?, location: LookupLocation): SmartList<PropertyDescriptor>? {
-        if (processedTypes != null && !processedTypes.add(type)) return result
+    private fun <T> Collection<KotlinType>.traverseClassDescriptorsAndSupertypesOnlyOnce(doStuff: (ClassDescriptor) -> T?): List<T> {
+        fun traverse(type: TypeConstructor, processedTypes: MutableSet<TypeConstructor>): List<T> {
+            if (!processedTypes.add(type)) return emptyList()
 
-        @Suppress("NAME_SHADOWING")
-        var result = result
-
-        val classifier = type.declarationDescriptor
-        if (classifier is ClassDescriptor) {
-            result = result.add(getSyntheticPropertyAndRecordLookups(classifier, name, location))
+            val descriptor = type.declarationDescriptor
+            return if (descriptor is ClassDescriptor) {
+                val res = doStuff(descriptor)
+                if (res == null) emptyList() else listOf(res)
+            }
+            else type.supertypes.flatMap { traverse(it.constructor, processedTypes) }
         }
-        else {
-            type.supertypes.forEach { result = collectSyntheticPropertiesByName(result, it.constructor, name, processedTypes, location) }
-        }
-
-        return result
+        return this.flatMap { traverse(it.constructor, hashSetOf()) }
     }
 
     override fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>): Collection<PropertyDescriptor> {
-        val result = ArrayList<PropertyDescriptor>()
-        val processedTypes = HashSet<TypeConstructor>()
-        receiverTypes.forEach { result.collectSyntheticProperties(it.constructor, processedTypes) }
-        return result
-    }
-
-    private fun MutableList<PropertyDescriptor>.collectSyntheticProperties(type: TypeConstructor, processedTypes: MutableSet<TypeConstructor>) {
-        if (!processedTypes.add(type)) return
-
-        val classifier = type.declarationDescriptor
-        if (classifier is ClassDescriptor) {
-            // TODO: Use decorator's getContributedDescriptors
-            for (descriptor in classifier.unsubstitutedMemberScope.getContributedDescriptors(DescriptorKindFilter.FUNCTIONS)) {
-                if (descriptor is FunctionDescriptor) {
-                    val propertyName = SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(descriptor.getName()) ?: continue
-                    addIfNotNull(decorateScope(classifier).getContributedVariables(propertyName, NoLookupLocation.FROM_SYNTHETIC_SCOPE).singleOrNull())
-                }
-            }
-        }
-        else {
-            type.supertypes.forEach { collectSyntheticProperties(it.constructor, processedTypes) }
-        }
-    }
-
-    private fun SmartList<PropertyDescriptor>?.add(property: PropertyDescriptor?): SmartList<PropertyDescriptor>? {
-        if (property == null) return this
-        val list = this ?: SmartList()
-        list.add(property)
-        return list
+        return receiverTypes.traverseClassDescriptorsAndSupertypesOnlyOnce { descriptor ->
+            // todo: implement getContributedDescriptors in decorator
+            descriptor.unsubstitutedMemberScope.getContributedDescriptors(DescriptorKindFilter.FUNCTIONS)
+                    .filterIsInstance<FunctionDescriptor>()
+                    .mapNotNull { function ->
+                        val propertyName = SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(function.name) ?: return@mapNotNull null
+                        decorateScope(descriptor).getContributedVariables(propertyName, NoLookupLocation.FROM_SYNTHETIC_SCOPE).singleOrNull()
+                    }
+        }.flatten()
     }
 
     override fun getSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<FunctionDescriptor> = emptyList()
