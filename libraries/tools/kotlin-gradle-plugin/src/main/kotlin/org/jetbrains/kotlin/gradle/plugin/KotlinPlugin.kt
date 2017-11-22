@@ -115,13 +115,15 @@ internal abstract class KotlinSourceSetProcessor<T : AbstractKotlinCompile<*>>(
         logger.kotlinDebug("Creating kotlin compile task $name")
         val kotlinCompile = doCreateTask(project, name)
         kotlinCompile.description = taskDescription
-        kotlinCompile.mapClasspath { sourceSet.compileClasspath }
+        kotlinCompile.mapClasspath { prepareClasspath() }
         kotlinCompile.setDestinationDir { defaultKotlinDestinationDir }
         sourceSet.output.tryAddClassesDir { project.files(kotlinTask.destinationDir).builtBy(kotlinTask) }
         return kotlinCompile
     }
 
     protected abstract fun doCreateTask(project: Project, taskName: String): T
+
+    protected open fun prepareClasspath(): FileCollection = sourceSet.compileClasspath
 }
 
 internal class Kotlin2JvmSourceSetProcessor(
@@ -328,6 +330,9 @@ internal class Kotlin2JsSourceSetProcessor(
         })
         project.tasks.findByName("clean")?.dependsOn(taskName)
     }
+
+    override fun prepareClasspath(): FileCollection =
+            project.files(project.resolveDependenciesForJs(sourceSet) { it.parentFile })
 }
 
 internal class KotlinCommonSourceSetProcessor(

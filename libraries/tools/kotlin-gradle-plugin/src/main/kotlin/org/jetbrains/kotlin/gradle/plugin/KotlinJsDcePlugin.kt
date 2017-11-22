@@ -18,10 +18,6 @@ package org.jetbrains.kotlin.gradle.plugin
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.ProjectDependency
-import org.gradle.api.artifacts.SelfResolvingDependency
-import org.gradle.api.internal.file.UnionFileTree
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
@@ -48,18 +44,8 @@ class KotlinJsDcePlugin : Plugin<Project> {
         project.afterEvaluate {
             val outputDir = File(kotlinTask.outputFile).parentFile
 
-            val configuration = project.configurations.findByName(sourceSet.compileConfigurationName)
-            val resolvedConfiguration = configuration.resolvedConfiguration
-            val dependencies = configuration.dependencies.flatMap { dependency ->
-                val fileInBuildDir = tryResolveBuildDir(kotlinTaskName, dependency)
-                when {
-                    fileInBuildDir != null -> listOf(fileInBuildDir)
-                    dependency is SelfResolvingDependency -> dependency.resolve().toList()
-                    else -> resolvedConfiguration.getFiles { it == dependency }
-                }
-            }
-            val dceInputTrees = listOf(project.fileTree(kotlinTask.outputFile)) + dependencies.map { project.fileTree(it) }
-            val dceInputFiles = UnionFileTree("dce-input", dceInputTrees)
+            val dependencies = project.resolveDependenciesForJs(sourceSet) { it }
+            val dceInputFiles = listOf(File(kotlinTask.outputFile)) + dependencies
 
             with (dceTask) {
                 classpath = sourceSet.compileClasspath
@@ -67,15 +53,6 @@ class KotlinJsDcePlugin : Plugin<Project> {
                 source(dceInputFiles)
             }
         }
-    }
-
-    private fun tryResolveBuildDir(kotlinTaskName: String, dependency: Dependency): File? {
-        if (dependency !is ProjectDependency) return null
-
-        val depProject = dependency.dependencyProject
-        val kotlinTask = depProject.tasks.findByName(kotlinTaskName) as? Kotlin2JsCompile ?: return null
-
-        return File(kotlinTask.outputFile)
     }
 
     companion object {

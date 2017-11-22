@@ -16,13 +16,19 @@
 
 package org.jetbrains.kotlin.gradle.plugin
 
+import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.artifacts.SelfResolvingDependency
 import org.gradle.api.file.FileCollection
-import org.gradle.api.file.FileTree
 import org.gradle.api.internal.HasConvention
 import org.gradle.api.logging.Logger
 import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.compile.AbstractCompile
+import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import java.io.File
 
 internal fun AbstractCompile.appendClasspathDynamically(file: File) {
@@ -77,4 +83,29 @@ internal inline fun Logger.kotlinDebug(message: () -> String) {
     if (isDebugEnabled) {
         kotlinDebug(message())
     }
+}
+
+internal fun Project.resolveDependenciesForJs(sourceSet: SourceSet, outputFileMapper: (File) -> File): List<File> {
+    val configuration = configurations.findByName(sourceSet.compileConfigurationName)
+    val resolvedConfiguration = configuration.resolvedConfiguration
+    return configuration.dependencies.flatMap { dependency ->
+        val fileInBuildDir = dependency.tryResolveJsBuildDir(outputFileMapper)
+        when {
+            fileInBuildDir != null -> listOf(fileInBuildDir)
+            dependency is SelfResolvingDependency -> dependency.resolve().toList()
+            else -> resolvedConfiguration.getFiles { it == dependency }
+        }
+    }
+}
+
+internal fun Dependency.tryResolveJsBuildDir(outputFileMapper: (File) -> File): File? {
+    if (this !is ProjectDependency) return null
+
+    val depProject = dependencyProject
+    val javaPluginConvention = depProject.convention.getPlugin(JavaPluginConvention::class.java)
+    val mainSourceSet = javaPluginConvention.sourceSets.findByName("main")
+    val kotlinTaskName = mainSourceSet.getCompileTaskName("kotlin2Js")
+
+    val kotlinTask = depProject.tasks.findByName(kotlinTaskName) as? Kotlin2JsCompile ?: return null
+    return outputFileMapper(File(kotlinTask.outputFile))
 }

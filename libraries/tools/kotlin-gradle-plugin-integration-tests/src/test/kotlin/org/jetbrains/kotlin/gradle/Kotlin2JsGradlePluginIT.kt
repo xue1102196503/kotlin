@@ -131,7 +131,7 @@ class Kotlin2JsGradlePluginIT : BaseGradleIT() {
     fun testCompilerTestAccessInternalProduction() {
         val project = Project("kotlin2JsInternalTest", "2.10")
 
-        project.build("runRhino") {
+        project.debug("runRhino") {
             assertSuccessful()
         }
     }
@@ -212,6 +212,35 @@ class Kotlin2JsGradlePluginIT : BaseGradleIT() {
 
             assertTrue("Source map should contain reference to main.kt") { map.contains("\"./src/main/kotlin/main.kt\"") }
             assertTrue("Source map should contain reference to foo.kt") { map.contains("\"./src/main/kotlin/foo.kt\"") }
+            assertTrue("Source map should contain source of main.kt") { map.contains("\"fun main(args: Array<String>) {\\n") }
+            assertTrue("Source map should contain source of foo.kt") { map.contains("\"inline fun foo(): String {\\n") }
+        }
+    }
+
+    @Test
+    fun testKotlinJsSourceMapInlineRelativePaths() {
+        val project = Project("kotlin2JsProjectWithSourceMapInline", "2.10")
+
+        project.setupWorkingDir()
+        File(project.projectDir, "build.gradle").modify {
+            it +
+            """
+                allprojects {
+                    compileKotlin2Js {
+                        kotlinOptions.sourceMapPrefix = ""
+                    }
+                }
+            """.trimIndent()
+        }
+
+        project.build("build") {
+            assertSuccessful()
+
+            val mapFilePath = "app/build/classes/main/app.js.map"
+            assertFileExists(mapFilePath)
+            val map = fileInWorkingDir(mapFilePath).readText()
+            assertTrue("Source map should contain reference to main.kt") { map.contains("\"../../../src/main/kotlin/main.kt\"") }
+            assertTrue("Source map should contain reference to foo.kt") { map.contains("\"../../../../lib/src/main/kotlin/foo.kt\"") }
             assertTrue("Source map should contain source of main.kt") { map.contains("\"fun main(args: Array<String>) {\\n") }
             assertTrue("Source map should contain source of foo.kt") { map.contains("\"inline fun foo(): String {\\n") }
         }
