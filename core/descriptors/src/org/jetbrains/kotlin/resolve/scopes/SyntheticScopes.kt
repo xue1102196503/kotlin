@@ -16,28 +16,29 @@
 
 package org.jetbrains.kotlin.resolve.scopes
 
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.WrappedType
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 
 class SyntheticType(
         override val delegate: KotlinType,
         override val memberScope: MemberScope
-): WrappedType()
+) : WrappedType()
 
 interface SyntheticScope {
     fun contriveType(type: KotlinType): KotlinType = type
 
-    fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<PropertyDescriptor>
     fun getSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
     fun getSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
     fun getSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
 
-    fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>): Collection<PropertyDescriptor>
     fun getSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>): Collection<FunctionDescriptor>
     fun getSyntheticStaticFunctions(scope: ResolutionScope): Collection<FunctionDescriptor>
     fun getSyntheticConstructors(scope: ResolutionScope): Collection<FunctionDescriptor>
@@ -51,7 +52,7 @@ interface SyntheticScopes {
     fun contriveType(type: KotlinType): KotlinType {
         var result = type
         for (scope in scopes) {
-            result = scope.contriveType(type)
+            result = scope.contriveType(result)
         }
         return result
     }
@@ -61,9 +62,11 @@ interface SyntheticScopes {
     }
 }
 
-
-fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation)
-        = scopes.flatMap { it.getSyntheticExtensionProperties(receiverTypes, name, location) }
+fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): List<PropertyDescriptor> {
+    return receiverTypes.traverseClassDescriptorsAndSupertypesOnlyOnce { type ->
+        contriveType(type).memberScope.getContributedVariables(name, location).singleOrNull()
+    }
+}
 
 fun SyntheticScopes.collectSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation)
         = scopes.flatMap { it.getSyntheticMemberFunctions(receiverTypes, name, location) }
@@ -74,8 +77,11 @@ fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope, name
 fun SyntheticScopes.collectSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation)
         = scopes.flatMap { it.getSyntheticConstructors(scope, name, location) }
 
-fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>)
-        = scopes.flatMap { it.getSyntheticExtensionProperties(receiverTypes) }
+fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>): List<PropertyDescriptor> {
+    return receiverTypes.traverseClassDescriptorsAndSupertypesOnlyOnce {
+        contriveType(it).memberScope.getContributedDescriptors().cast<Collection<PropertyDescriptor>>()
+    }.flatten()
+}
 
 fun SyntheticScopes.collectSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>)
         = scopes.flatMap { it.getSyntheticMemberFunctions(receiverTypes) }
@@ -88,3 +94,19 @@ fun SyntheticScopes.collectSyntheticConstructors(scope: ResolutionScope)
 
 fun SyntheticScopes.collectSyntheticConstructors(constructor: ConstructorDescriptor)
         = scopes.mapNotNull { it.getSyntheticConstructor(constructor) }
+
+private fun <T> Collection<KotlinType>.traverseClassDescriptorsAndSupertypesOnlyOnce(doStuff: (KotlinType) -> T?): List<T> {
+    fun traverse(type: KotlinType, processedTypes: MutableSet<TypeConstructor>): List<T> {
+        if (!processedTypes.add(type.constructor)) return emptyList()
+
+        val descriptor = type.constructor.declarationDescriptor
+        return if (descriptor is ClassDescriptor) {
+            val res = doStuff(type)
+            if (res == null) emptyList() else listOf(res)
+        }
+        else type.constructor.supertypes.flatMap { traverse(it, processedTypes) }
+    }
+
+    val processedTypes = hashSetOf<TypeConstructor>()
+    return this.flatMap { traverse(it, processedTypes) }
+}

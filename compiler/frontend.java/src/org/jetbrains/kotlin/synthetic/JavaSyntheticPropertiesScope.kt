@@ -306,13 +306,6 @@ class JavaSyntheticPropertiesScope(private val storageManager: StorageManager, p
         SyntheticType(it, JavaSyntheticPropertiesMemberScope(it, storageManager))
     }
 
-    override fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<PropertyDescriptor> {
-        val result = receiverTypes.traverseClassDescriptorsAndSupertypesOnlyOnce { type ->
-            makeSynthetic(type).memberScope.getContributedVariables(name, location).singleOrNull()
-        }
-        return result
-    }
-
     override fun contriveType(type: KotlinType) = makeSynthetic(type)
 
     override fun getSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
@@ -329,28 +322,6 @@ class JavaSyntheticPropertiesScope(private val storageManager: StorageManager, p
 
     override fun getSyntheticConstructor(constructor: ConstructorDescriptor): ConstructorDescriptor?
             = null
-
-    private fun <T> Collection<KotlinType>.traverseClassDescriptorsAndSupertypesOnlyOnce(doStuff: (KotlinType) -> T?): List<T> {
-        fun traverse(type: KotlinType, processedTypes: MutableSet<TypeConstructor>): List<T> {
-            if (!processedTypes.add(type.constructor)) return emptyList()
-
-            val descriptor = type.constructor.declarationDescriptor
-            return if (descriptor is ClassDescriptor) {
-                val res = doStuff(type)
-                if (res == null) emptyList() else listOf(res)
-            }
-            else type.constructor.supertypes.flatMap { traverse(it, processedTypes) }
-        }
-        val processedTypes = hashSetOf<TypeConstructor>()
-        return this.flatMap { traverse(it, processedTypes) }
-    }
-
-    override fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>): Collection<PropertyDescriptor> {
-        val result = receiverTypes.traverseClassDescriptorsAndSupertypesOnlyOnce {
-            makeSynthetic(it).memberScope.getContributedDescriptors().cast<Collection<PropertyDescriptor>>()
-        }.flatten()
-        return result
-    }
 
     override fun getSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<FunctionDescriptor> = emptyList()
     override fun getSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>): Collection<FunctionDescriptor> = emptyList()
