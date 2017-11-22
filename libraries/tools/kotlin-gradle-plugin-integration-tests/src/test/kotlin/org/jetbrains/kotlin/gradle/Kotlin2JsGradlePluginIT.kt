@@ -227,6 +227,7 @@ class Kotlin2JsGradlePluginIT : BaseGradleIT() {
             assertFileExists("$pathPrefix/exampleapp.js.map")
             assertFileExists("$pathPrefix/examplelib.js.map")
             assertFileContains("$pathPrefix/exampleapp.js.map", "\"../../src/main/kotlin/exampleapp/main.kt\"")
+            assertFileContains("$pathPrefix/examplelib.js.map", "\"../../../libraryProject/src/main/kotlin/examplelib/lib.kt\"")
         }
     }
 
@@ -246,6 +247,7 @@ class Kotlin2JsGradlePluginIT : BaseGradleIT() {
             assertFileExists("$pathPrefix/exampleapp.js.map")
             assertFileExists("$pathPrefix/examplelib.js.map")
             assertFileContains("$pathPrefix/exampleapp.js.map", "\"../../src/main/kotlin/exampleapp/main.kt\"")
+            assertFileContains("$pathPrefix/examplelib.js.map", "\"../../../libraryProject/src/main/kotlin/examplelib/lib.kt\"")
         }
     }
 
