@@ -34,8 +34,6 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeFirstWord
-import org.jetbrains.kotlin.utils.Printer
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.util.*
 import kotlin.properties.Delegates
 
@@ -76,9 +74,9 @@ interface SyntheticJavaPropertyDescriptor : PropertyDescriptor {
     }
 }
 
-class JavaSyntheticPropertiesMemberScope(type: KotlinType, storageManager: StorageManager) : MemberScope {
+class JavaSyntheticPropertiesMemberScope(type: KotlinType, storageManager: StorageManager) : SyntheticMemberScope(storageManager) {
     private val ownerClass = type.constructor.declarationDescriptor as ClassDescriptor
-    private val originalScope = ownerClass.unsubstitutedMemberScope
+    override val wrappedScope = ownerClass.unsubstitutedMemberScope
     private val properties = storageManager.createMemoizedFunctionWithNullableValues<Name, PropertyDescriptor> {
         doGetProperty(it)
     }
@@ -87,7 +85,7 @@ class JavaSyntheticPropertiesMemberScope(type: KotlinType, storageManager: Stora
     }
 
     private fun doGetDescriptors(): List<PropertyDescriptor> {
-        return originalScope.getContributedDescriptors(DescriptorKindFilter.FUNCTIONS)
+        return originalScope().getContributedDescriptors(DescriptorKindFilter.FUNCTIONS)
                 .filterIsInstance<FunctionDescriptor>()
                 .mapNotNull {
                     val propertyName = SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(it.name) ?: return@mapNotNull null
@@ -104,11 +102,11 @@ class JavaSyntheticPropertiesMemberScope(type: KotlinType, storageManager: Stora
 
         val possibleGetters = possibleGetMethodNames(name)
         val getter = possibleGetters
-                             .flatMap { originalScope.getContributedFunctions(it, NoLookupLocation.FROM_SYNTHETIC_SCOPE) }
+                             .flatMap { originalScope().getContributedFunctions(it, NoLookupLocation.FROM_SYNTHETIC_SCOPE) }
                              .singleOrNull { it.hasJavaOriginInHierarchy() && isGoodGetMethod(it) } ?: return null
 
         val setterName = setMethodName(getter.name)
-        val setter = originalScope.getContributedFunctions(setterName, NoLookupLocation.FROM_SYNTHETIC_SCOPE)
+        val setter = originalScope().getContributedFunctions(setterName, NoLookupLocation.FROM_SYNTHETIC_SCOPE)
                 .singleOrNull { isGoodSetMethod(it, getter) }
 
         val type = getter.returnType!!
@@ -171,18 +169,6 @@ class JavaSyntheticPropertiesMemberScope(type: KotlinType, storageManager: Stora
         return if (property == null) emptyList()
         else listOf(property)
     }
-
-    override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<SimpleFunctionDescriptor> = emptySet()
-
-    override fun getFunctionNames(): Set<Name> = emptySet()
-
-    override fun getVariableNames(): Set<Name> = emptySet()
-
-    override fun getClassifierNames(): Set<Name>? = null
-
-    override fun printScopeStructure(p: Printer) {}
-
-    override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? = null
 
     override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean) = descriptors()
 

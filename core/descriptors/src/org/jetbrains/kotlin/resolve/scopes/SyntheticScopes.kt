@@ -16,15 +16,14 @@
 
 package org.jetbrains.kotlin.resolve.scopes
 
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.WrappedType
+import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
 class SyntheticType(
@@ -60,6 +59,50 @@ interface SyntheticScopes {
     object Empty : SyntheticScopes {
         override val scopes: Collection<SyntheticScope> = emptyList()
     }
+}
+
+abstract class SyntheticResolutionScope(storageManager: StorageManager) : ResolutionScope {
+    protected abstract val wrappedScope: ResolutionScope
+    protected val originalScope = storageManager.createLazyValue {
+        doGetOriginal()
+    }
+
+    open protected fun doGetOriginal(): ResolutionScope {
+        var result = wrappedScope
+        while (result is SyntheticResolutionScope) {
+            result = result.wrappedScope
+        }
+        return result
+    }
+
+    override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? = null
+    override fun getContributedVariables(name: Name, location: LookupLocation): Collection<VariableDescriptor> = emptyList()
+    override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> = emptyList()
+    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> = emptyList()
+}
+
+abstract class SyntheticMemberScope(storageManager: StorageManager) : MemberScope {
+    protected abstract val wrappedScope: MemberScope
+    protected val originalScope = storageManager.createLazyValue {
+        doGetOriginal()
+    }
+
+    open protected fun doGetOriginal(): MemberScope {
+        var result = wrappedScope
+        while (result is SyntheticMemberScope) {
+            result = result.wrappedScope
+        }
+        return result
+    }
+
+    override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? = null
+    override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> = emptyList()
+    override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<SimpleFunctionDescriptor> = emptyList()
+    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> = emptyList()
+    override fun getFunctionNames(): Set<Name> = emptySet()
+    override fun getVariableNames(): Set<Name> = emptySet()
+    override fun getClassifierNames(): Set<Name>? = null
+    override fun printScopeStructure(p: Printer) {}
 }
 
 fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): List<PropertyDescriptor> {
