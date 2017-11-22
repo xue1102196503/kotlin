@@ -128,6 +128,10 @@ class SamAdapterFunctionsScope(
         private val samResolver: SamConversionResolver,
         private val deprecationResolver: DeprecationResolver
 ) : SyntheticScope {
+    override fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<PropertyDescriptor> = emptyList()
+
+    override fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>): Collection<PropertyDescriptor> = emptyList()
+
     private val decorateFunctionsScope = storageManager.createMemoizedFunction<KotlinType, ResolutionScope> {
         SamAdapterFunctionsScopeDecorator(storageManager, samResolver, deprecationResolver, it)
     }
@@ -165,10 +169,6 @@ class SamAdapterFunctionsScope(
                     }
         }
     }
-
-    override fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<PropertyDescriptor> = emptyList()
-
-    override fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>): Collection<PropertyDescriptor> = emptyList()
 
     override fun getSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation) =
             decorateStaticFunctionsScope(scope).getContributedFunctions(name, location)

@@ -22,9 +22,16 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.WrappedType
 
+class SyntheticType(
+        override val delegate: KotlinType,
+        override val memberScope: MemberScope
+): WrappedType()
 
 interface SyntheticScope {
+    fun contriveType(type: KotlinType): KotlinType = type
+
     fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<PropertyDescriptor>
     fun getSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
     fun getSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
@@ -40,6 +47,14 @@ interface SyntheticScope {
 
 interface SyntheticScopes {
     val scopes: Collection<SyntheticScope>
+
+    fun contriveType(type: KotlinType): KotlinType {
+        var result = type
+        for (scope in scopes) {
+            result = scope.contriveType(type)
+        }
+        return result
+    }
 
     object Empty : SyntheticScopes {
         override val scopes: Collection<SyntheticScope> = emptyList()
