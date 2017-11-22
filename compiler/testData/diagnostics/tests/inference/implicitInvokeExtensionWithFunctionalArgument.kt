@@ -23,7 +23,7 @@ fun test(s: SelectorFor<State>): Double {
     d checkType { _<AbstractSelector<State, Unit>>() }
 
     val e = s { return p1 }
-    e checkType { _<AbstractSelector<State, Nothing>>() }
+    e checkType { <!NI;UNRESOLVED_REFERENCE_WRONG_RECEIVER, NI;DEBUG_INFO_UNRESOLVED_WITH_TARGET!>_<!><AbstractSelector<State, Nothing>>() }
 
-    <!UNREACHABLE_CODE!>return<!> null!!
+    <!OI;UNREACHABLE_CODE!>return<!> null!!
 }
