@@ -39,7 +39,9 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
+import kotlin.Pair;
 import kotlin.collections.CollectionsKt;
+import kotlin.collections.MapsKt;
 import kotlin.collections.SetsKt;
 import kotlin.jvm.functions.Function1;
 import kotlin.text.StringsKt;
@@ -58,10 +60,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 import org.jetbrains.kotlin.cli.jvm.config.JvmContentRootsKt;
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime;
-import org.jetbrains.kotlin.config.CommonConfigurationKeys;
-import org.jetbrains.kotlin.config.CompilerConfiguration;
-import org.jetbrains.kotlin.config.ContentRootsKt;
-import org.jetbrains.kotlin.config.JVMConfigurationKeys;
+import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl;
 import org.jetbrains.kotlin.diagnostics.Diagnostic;
 import org.jetbrains.kotlin.diagnostics.Errors;
@@ -471,7 +470,16 @@ public class KotlinTestUtils {
     public static CompilerConfiguration newConfiguration() {
         CompilerConfiguration configuration = new CompilerConfiguration();
         configuration.put(CommonConfigurationKeys.MODULE_NAME, TEST_MODULE_NAME);
-        configuration.put(CommonConfigurationKeys.USE_NEW_INFERENCE, "true".equals(System.getProperty("kotlin.ni")));
+
+        if ("true".equals(System.getProperty("kotlin.ni"))) {
+            // Enable new inference for tests which do not declare their own language version settings
+            CommonConfigurationKeysKt.setLanguageVersionSettings(configuration, new LanguageVersionSettingsImpl(
+                    LanguageVersionSettingsImpl.DEFAULT.getLanguageVersion(),
+                    LanguageVersionSettingsImpl.DEFAULT.getApiVersion(),
+                    Collections.emptyMap(),
+                    MapsKt.mapOf(new Pair<>(LanguageFeature.NewInference, LanguageFeature.State.ENABLED))
+            ));
+        }
 
         configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, new MessageCollector() {
             @Override
