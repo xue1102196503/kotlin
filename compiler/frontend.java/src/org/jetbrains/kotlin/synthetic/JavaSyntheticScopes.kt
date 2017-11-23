@@ -32,6 +32,7 @@ class JavaSyntheticScopes(
 ): SyntheticScopes {
     override val scopes = listOf(
             JavaSyntheticPropertiesScope(storageManager, lookupTracker),
+            SamAdapterSyntheticMemberScopeProvider(storageManager, languageVersionSettings, samConventionResolver, deprecationResolver),
             SamAdapterFunctionsScope(storageManager, languageVersionSettings, samConventionResolver, deprecationResolver)
     )
 }

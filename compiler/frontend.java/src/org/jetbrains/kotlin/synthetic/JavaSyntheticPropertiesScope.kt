@@ -76,7 +76,7 @@ interface SyntheticJavaPropertyDescriptor : PropertyDescriptor {
 
 class JavaSyntheticPropertiesMemberScope(type: KotlinType, storageManager: StorageManager) : SyntheticMemberScope(storageManager) {
     private val ownerClass = type.constructor.declarationDescriptor as ClassDescriptor
-    override val wrappedScope = ownerClass.unsubstitutedMemberScope
+    override val wrappedScope = type.memberScope
     private val properties = storageManager.createMemoizedFunctionWithNullableValues<Name, PropertyDescriptor> {
         doGetProperty(it)
     }
@@ -164,13 +164,16 @@ class JavaSyntheticPropertiesMemberScope(type: KotlinType, storageManager: Stora
     }
 
     override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> {
-        recordLookup(name, location)
+        originalScope().recordLookup(name, location)
         val property = properties(name)
         return if (property == null) emptyList()
         else listOf(property)
     }
 
-    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean) = descriptors()
+    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): List<PropertyDescriptor> {
+        val result = descriptors()
+        return result
+    }
 
     private class MyPropertyDescriptor(
             containingDeclaration: DeclarationDescriptor,
@@ -289,7 +292,9 @@ class JavaSyntheticPropertiesMemberScope(type: KotlinType, storageManager: Stora
 
 class JavaSyntheticPropertiesScope(private val storageManager: StorageManager, private val lookupTracker: LookupTracker) : SyntheticScope {
     private val makeSynthetic = storageManager.createMemoizedFunction<KotlinType, KotlinType> {
-        SyntheticType(it, JavaSyntheticPropertiesMemberScope(it, storageManager))
+        if (it.constructor.declarationDescriptor is ClassDescriptor)
+            SyntheticType(it, JavaSyntheticPropertiesMemberScope(it, storageManager))
+        else it
     }
 
     override fun contriveType(type: KotlinType) = makeSynthetic(type)
@@ -308,8 +313,5 @@ class JavaSyntheticPropertiesScope(private val storageManager: StorageManager, p
 
     override fun getSyntheticConstructor(constructor: ConstructorDescriptor): ConstructorDescriptor?
             = null
-
-    override fun getSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): Collection<FunctionDescriptor> = emptyList()
-    override fun getSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>): Collection<FunctionDescriptor> = emptyList()
 }
 
