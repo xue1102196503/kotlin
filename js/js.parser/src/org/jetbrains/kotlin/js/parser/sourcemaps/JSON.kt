@@ -165,12 +165,9 @@ private class JsonParser(val reader: Reader) {
             '['.toInt() -> parseArray()
             '{'.toInt() -> parseObject()
             '"'.toInt() -> JsonString(parseString())
-            'n'.toInt() -> { expectString("null"); JsonNull
-            }
-            'f'.toInt() -> { expectString("false"); JsonBoolean.FALSE
-            }
-            't'.toInt() -> { expectString("true"); JsonBoolean.TRUE
-            }
+            'n'.toInt() -> { expectString("null"); JsonNull }
+            'f'.toInt() -> { expectString("false"); JsonBoolean.FALSE }
+            't'.toInt() -> { expectString("true"); JsonBoolean.TRUE }
             in '0'.toInt()..'9'.toInt() -> JsonNumber(parseNumber())
             '-'.toInt() -> { advance(); JsonNumber(-parseNumber())
             }
@@ -281,28 +278,28 @@ private class JsonParser(val reader: Reader) {
 
     private fun parseNumber(): Double {
         val sb = StringBuilder()
-        parseInt(sb)
+        takeIntegerDigitsTo(sb)
         if (sb.startsWith('0') && sb.length > 1) error("Number must not start with zero")
 
         return when (charCode) {
             '.'.toInt() -> {
                 sb.append('.')
                 advance()
-                parseInt(sb)
+                takeIntegerDigitsTo(sb)
                 if (charCode == 'e'.toInt() || charCode == 'E'.toInt()) {
-                    parseExponent(sb)
+                    takeExponentTo(sb)
                 }
                 sb.toString().toDouble()
             }
             'e'.toInt(), 'E'.toInt() -> {
-                parseExponent(sb)
+                takeExponentTo(sb)
                 sb.toString().toDouble()
             }
             else -> return sb.toString().toInt().toDouble()
         }
     }
 
-    private fun parseInt(buffer: StringBuilder) {
+    private fun takeIntegerDigitsTo(buffer: StringBuilder) {
         var size = 0
         while (charCode in '0'.toInt()..'9'.toInt()) {
             buffer.append(charCode.toChar())
@@ -312,14 +309,14 @@ private class JsonParser(val reader: Reader) {
         if (size == 0) error("Invalid char, decimal digit expected")
     }
 
-    private fun parseExponent(buffer: StringBuilder) {
+    private fun takeExponentTo(buffer: StringBuilder) {
         buffer.append('e')
         advance()
         if (charCode == '-'.toInt() || charCode == '+'.toInt()) {
             buffer.append(charCode.toChar())
             advance()
         }
-        parseInt(buffer)
+        takeIntegerDigitsTo(buffer)
     }
 
     private fun expectString(expected: String) {
