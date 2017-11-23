@@ -33,11 +33,10 @@ class SyntheticType(
 
 interface SyntheticScope {
     fun contriveType(type: KotlinType): KotlinType = type
+    fun contriveScope(scope: ResolutionScope): ResolutionScope = scope
 
-    fun getSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
     fun getSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
 
-    fun getSyntheticStaticFunctions(scope: ResolutionScope): Collection<FunctionDescriptor>
     fun getSyntheticConstructors(scope: ResolutionScope): Collection<FunctionDescriptor>
 
     fun getSyntheticConstructor(constructor: ConstructorDescriptor): ConstructorDescriptor?
@@ -50,6 +49,14 @@ interface SyntheticScopes {
         var result = type
         for (scope in scopes) {
             result = scope.contriveType(result)
+        }
+        return result
+    }
+
+    fun contriveScope(scope: ResolutionScope): ResolutionScope {
+        var result = scope
+        for (provider in scopes) {
+            result = provider.contriveScope(result)
         }
         return result
     }
@@ -73,10 +80,17 @@ abstract class SyntheticResolutionScope(storageManager: StorageManager) : Resolu
         return result
     }
 
-    override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? = null
-    override fun getContributedVariables(name: Name, location: LookupLocation): Collection<VariableDescriptor> = emptyList()
-    override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> = emptyList()
-    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> = emptyList()
+    override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? =
+            if (wrappedScope is SyntheticResolutionScope) wrappedScope.getContributedClassifier(name, location) else null
+
+    override fun getContributedVariables(name: Name, location: LookupLocation): Collection<VariableDescriptor> =
+            if (wrappedScope is SyntheticResolutionScope) wrappedScope.getContributedVariables(name, location) else emptyList()
+
+    override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> =
+            if (wrappedScope is SyntheticResolutionScope) wrappedScope.getContributedFunctions(name, location) else emptyList()
+
+    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> =
+            if (wrappedScope is SyntheticResolutionScope) wrappedScope.getContributedDescriptors(kindFilter, nameFilter) else emptyList()
 }
 
 abstract class SyntheticMemberScope(storageManager: StorageManager) : MemberScope {
@@ -133,8 +147,8 @@ fun SyntheticScopes.collectSyntheticMemberFunctions(receiverTypes: Collection<Ko
             contriveType(type).memberScope.getContributedFunctions(name, location)
         }
 
-fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation)
-        = scopes.flatMap { it.getSyntheticStaticFunctions(scope, name, location) }
+fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation) =
+        contriveScope(scope).getContributedFunctions(name, location)
 
 fun SyntheticScopes.collectSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation)
         = scopes.flatMap { it.getSyntheticConstructors(scope, name, location) }
@@ -150,8 +164,8 @@ fun SyntheticScopes.collectSyntheticMemberFunctions(receiverTypes: Collection<Ko
             contriveType(type).memberScope.getContributedDescriptors().filterIsInstance<FunctionDescriptor>()
         }
 
-fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope)
-        = scopes.flatMap { it.getSyntheticStaticFunctions(scope) }
+fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope) =
+        contriveScope(scope).getContributedDescriptors().filterIsInstance<FunctionDescriptor>()
 
 fun SyntheticScopes.collectSyntheticConstructors(scope: ResolutionScope)
         = scopes.flatMap { it.getSyntheticConstructors(scope) }

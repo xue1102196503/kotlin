@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyGetterDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertySetterDescriptorImpl
 import org.jetbrains.kotlin.incremental.components.LookupLocation
-import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
@@ -74,7 +73,10 @@ interface SyntheticJavaPropertyDescriptor : PropertyDescriptor {
     }
 }
 
-class JavaSyntheticPropertiesMemberScope(type: KotlinType, storageManager: StorageManager) : SyntheticMemberScope(storageManager) {
+class JavaSyntheticPropertiesMemberScope(
+        type: KotlinType,
+        storageManager: StorageManager
+) : SyntheticMemberScope(storageManager) {
     private val ownerClass = type.constructor.declarationDescriptor as ClassDescriptor
     override val wrappedScope = type.memberScope
     private val properties = storageManager.createMemoizedFunctionWithNullableValues<Name, PropertyDescriptor> {
@@ -166,14 +168,12 @@ class JavaSyntheticPropertiesMemberScope(type: KotlinType, storageManager: Stora
     override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> {
         originalScope().recordLookup(name, location)
         val property = properties(name)
-        return if (property == null) emptyList()
-        else listOf(property)
+        return if (property == null) super.getContributedVariables(name, location)
+        else super.getContributedVariables(name, location) + property
     }
 
-    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): List<PropertyDescriptor> {
-        val result = descriptors()
-        return result
-    }
+    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean) =
+            descriptors() + super.getContributedDescriptors(kindFilter, nameFilter)
 
     private class MyPropertyDescriptor(
             containingDeclaration: DeclarationDescriptor,
@@ -290,7 +290,7 @@ class JavaSyntheticPropertiesMemberScope(type: KotlinType, storageManager: Stora
     }
 }
 
-class JavaSyntheticPropertiesScope(private val storageManager: StorageManager, private val lookupTracker: LookupTracker) : SyntheticScope {
+class JavaSyntheticPropertiesScopeProvider(private val storageManager: StorageManager) : SyntheticScope {
     private val makeSynthetic = storageManager.createMemoizedFunction<KotlinType, KotlinType> {
         if (it.constructor.declarationDescriptor is ClassDescriptor)
             SyntheticType(it, JavaSyntheticPropertiesMemberScope(it, storageManager))
@@ -299,13 +299,7 @@ class JavaSyntheticPropertiesScope(private val storageManager: StorageManager, p
 
     override fun contriveType(type: KotlinType) = makeSynthetic(type)
 
-    override fun getSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
-            = emptyList()
-
     override fun getSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
-            = emptyList()
-
-    override fun getSyntheticStaticFunctions(scope: ResolutionScope): Collection<FunctionDescriptor>
             = emptyList()
 
     override fun getSyntheticConstructors(scope: ResolutionScope): Collection<FunctionDescriptor>

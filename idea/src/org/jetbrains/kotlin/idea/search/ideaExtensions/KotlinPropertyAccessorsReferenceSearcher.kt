@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
-import org.jetbrains.kotlin.synthetic.JavaSyntheticPropertiesScope
+import org.jetbrains.kotlin.synthetic.JavaSyntheticPropertiesScopeProvider
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 
@@ -57,7 +57,7 @@ class KotlinPropertyAccessorsReferenceSearcher : QueryExecutorBase<PsiReference,
 
         if (!canBePropertyAccessor(method.name)) return null
         val functionDescriptor = method.getJavaMethodDescriptor() ?: return null
-        val syntheticExtensionsScope = JavaSyntheticPropertiesScope(LockBasedStorageManager(), LookupTracker.DO_NOTHING)
+        val syntheticExtensionsScope = JavaSyntheticPropertiesScopeProvider(LockBasedStorageManager(), LookupTracker.DO_NOTHING)
         val property = SyntheticJavaPropertyDescriptor.findByGetterOrSetter(functionDescriptor, syntheticExtensionsScope) ?: return null
         return property.name.asString()
     }
