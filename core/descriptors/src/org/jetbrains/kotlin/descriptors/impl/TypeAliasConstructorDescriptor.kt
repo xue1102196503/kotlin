@@ -46,7 +46,7 @@ interface TypeAliasConstructorDescriptor : ConstructorDescriptor, DescriptorDeri
     ): TypeAliasConstructorDescriptor
 }
 
-class TypeAliasConstructorDescriptorImpl private constructor(
+open class TypeAliasConstructorDescriptorImpl protected constructor(
         val storageManager: StorageManager,
         override val typeAliasDescriptor: TypeAliasDescriptor,
         underlyingConstructorDescriptor: ClassConstructorDescriptor,
@@ -87,7 +87,7 @@ class TypeAliasConstructorDescriptorImpl private constructor(
     }
 
     override var underlyingConstructorDescriptor: ClassConstructorDescriptor = underlyingConstructorDescriptor
-            private set
+            protected set
 
     override fun isPrimary(): Boolean =
             underlyingConstructorDescriptor.isPrimary

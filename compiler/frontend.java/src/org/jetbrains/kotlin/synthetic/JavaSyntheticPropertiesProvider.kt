@@ -288,7 +288,7 @@ class JavaSyntheticPropertiesMemberScope(
     }
 }
 
-class JavaSyntheticPropertiesScopeProvider(private val storageManager: StorageManager) : SyntheticScope {
+class JavaSyntheticPropertiesProvider(private val storageManager: StorageManager) : SyntheticScope {
     private val makeSynthetic = storageManager.createMemoizedFunction<KotlinType, KotlinType> {
         if (it.constructor.declarationDescriptor is ClassDescriptor)
             SyntheticType(it, JavaSyntheticPropertiesMemberScope(it, storageManager))
@@ -296,14 +296,5 @@ class JavaSyntheticPropertiesScopeProvider(private val storageManager: StorageMa
     }
 
     override fun contriveType(type: KotlinType) = makeSynthetic(type)
-
-    override fun getSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
-            = emptyList()
-
-    override fun getSyntheticConstructors(scope: ResolutionScope): Collection<FunctionDescriptor>
-            = emptyList()
-
-    override fun getSyntheticConstructor(constructor: ConstructorDescriptor): ConstructorDescriptor?
-            = null
 }
 

@@ -168,7 +168,7 @@ private class SamAdapterFunctionsMemberScope(
     }
 }
 
-class SamAdapterSyntheticMemberScopeProvider(
+class SamAdapterSyntheticMembersProvider(
         private val storageManager: StorageManager,
         private val samResolver: SamConversionResolver,
         private val deprecationResolver: DeprecationResolver
@@ -178,10 +178,6 @@ class SamAdapterSyntheticMemberScopeProvider(
     }
 
     override fun contriveType(type: KotlinType) = makeSynthetic(type)
-
-    override fun getSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor> = emptyList()
-    override fun getSyntheticConstructors(scope: ResolutionScope): Collection<FunctionDescriptor> = emptyList()
-    override fun getSyntheticConstructor(constructor: ConstructorDescriptor): ConstructorDescriptor? = null
 }
 
 private class SamAdapterSyntheticStaticFunctionsResolutionScope(
@@ -211,8 +207,9 @@ private class SamAdapterSyntheticStaticFunctionsResolutionScope(
     private fun doGetDescriptors(): List<FunctionDescriptor> =
             originalScope().getContributedDescriptors(DescriptorKindFilter.FUNCTIONS).mapNotNull { wrapFunction(it) }
 
-    override fun getContributedFunctions(name: Name, location: LookupLocation) =
-            functions(name) + super.getContributedFunctions(name, location)
+    override fun getContributedFunctions(name: Name, location: LookupLocation): List<FunctionDescriptor> {
+        return functions(name) + super.getContributedFunctions(name, location)
+    }
 
     override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean) =
             descriptors() + super.getContributedDescriptors(kindFilter, nameFilter)
@@ -221,22 +218,19 @@ private class SamAdapterSyntheticStaticFunctionsResolutionScope(
 class SamAdapterSyntheticStaticFunctionsProvider(
         private val storageManager: StorageManager,
         private val samResolver: SamConversionResolver
-): SyntheticScope {
+) : SyntheticScope {
     private val makeSynthetic = storageManager.createMemoizedFunction<ResolutionScope, ResolutionScope> {
         SamAdapterSyntheticStaticFunctionsResolutionScope(storageManager, samResolver, it)
     }
 
     override fun contriveScope(scope: ResolutionScope): ResolutionScope = makeSynthetic(scope)
-
-    override fun getSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor> = emptyList()
-    override fun getSyntheticConstructors(scope: ResolutionScope): Collection<FunctionDescriptor> = emptyList()
-    override fun getSyntheticConstructor(constructor: ConstructorDescriptor): ConstructorDescriptor? = null
 }
 
-class SamAdapterFunctionsScope(
+private class SamAdapterSyntheticConstructorsScope(
         private val storageManager: StorageManager,
-        private val samResolver: SamConversionResolver
-) : SyntheticScope {
+        private val samResolver: SamConversionResolver,
+        override val wrappedScope: ResolutionScope
+) : SyntheticResolutionScope(storageManager) {
     private val samConstructorForClassifier =
             storageManager.createMemoizedFunction<JavaClassDescriptor, SamConstructorDescriptor> { classifier ->
                 SingleAbstractMethodUtils.createSamConstructorFunction(classifier.containingDeclaration, classifier, samResolver)
@@ -249,21 +243,24 @@ class SamAdapterFunctionsScope(
 
     private val samConstructorForTypeAliasConstructor =
             storageManager.createMemoizedFunctionWithNullableValues<Pair<ClassConstructorDescriptor, TypeAliasDescriptor>, TypeAliasConstructorDescriptor> { (constructor, typeAliasDescriptor) ->
-                TypeAliasConstructorDescriptorImpl.createIfAvailable(storageManager, typeAliasDescriptor, constructor)
+                run {
+                    val descriptor = TypeAliasConstructorDescriptorImpl.createIfAvailable(storageManager, typeAliasDescriptor, constructor) as? TypeAliasConstructorDescriptorImpl ?: return@run null
+                    SamAdapterTypeAliasConstructorDescriptor(descriptor)
+                }
             }
 
-    override fun getSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
-        val classifier = scope.getContributedClassifier(name, location) ?: return emptyList()
-        return getAllSamConstructors(classifier)
+    override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
+        val classifier = originalScope().getContributedClassifier(name, location) ?: return super.getContributedFunctions(name, location)
+        return getAllSamConstructors(classifier) + super.getContributedFunctions(name, location)
     }
 
-    override fun getSyntheticConstructors(scope: ResolutionScope): Collection<FunctionDescriptor> {
-        return scope.getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS)
-                .filterIsInstance<ClassifierDescriptor>()
-                .flatMap { getAllSamConstructors(it) }
+    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> {
+        return originalScope().getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS)
+                       .filterIsInstance<ClassifierDescriptor>()
+                       .flatMap { getAllSamConstructors(it) } + super.getContributedDescriptors(kindFilter, nameFilter)
     }
 
-    override fun getSyntheticConstructor(constructor: ConstructorDescriptor): ConstructorDescriptor? {
+    private fun getSyntheticConstructor(constructor: ConstructorDescriptor): ConstructorDescriptor? {
         when (constructor) {
             is JavaClassConstructorDescriptor -> return createJavaSamAdapterConstructor(constructor)
             is TypeAliasConstructorDescriptor -> {
@@ -282,7 +279,8 @@ class SamAdapterFunctionsScope(
     }
 
     private fun getAllSamConstructors(classifier: ClassifierDescriptor): List<FunctionDescriptor> {
-        return getSamAdaptersFromConstructors(classifier) + listOfNotNull(getSamConstructor(classifier))
+        val result = getSamAdaptersFromConstructors(classifier) + listOfNotNull(getSamConstructor(classifier))
+        return result
     }
 
     private fun getSamAdaptersFromConstructors(classifier: ClassifierDescriptor): List<FunctionDescriptor> {
@@ -312,6 +310,29 @@ class SamAdapterFunctionsScope(
         return SingleAbstractMethodUtils.createTypeAliasSamConstructorFunction(
                 classifier, samConstructorForClassifier(classDescriptor), samResolver)
     }
+
+    private class SamAdapterTypeAliasConstructorDescriptor(
+            original: TypeAliasConstructorDescriptorImpl
+    ) : TypeAliasConstructorDescriptorImpl(
+            original.storageManager,
+            original.typeAliasDescriptor,
+            original.underlyingConstructorDescriptor,
+            original.original,
+            original.annotations,
+            original.kind,
+            original.source
+    ), SyntheticConstructorFunction
+}
+
+class SamAdapterSyntheticConstructorsProvider(
+        private val storageManager: StorageManager,
+        private val samResolver: SamConversionResolver
+) : SyntheticScope {
+    private val makeSynthetic = storageManager.createMemoizedFunction<ResolutionScope, ResolutionScope> {
+        SamAdapterSyntheticConstructorsScope(storageManager, samResolver, it)
+    }
+
+    override fun contriveScope(scope: ResolutionScope): ResolutionScope = makeSynthetic(scope)
 }
 
 private fun FunctionDescriptor.substituteForReceiverType(type: KotlinType): FunctionDescriptor? {
