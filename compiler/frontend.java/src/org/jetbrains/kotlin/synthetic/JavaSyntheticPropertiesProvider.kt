@@ -59,10 +59,10 @@ interface SyntheticJavaPropertyDescriptor : SyntheticProperty {
                     .firstOrNull { originalGetterOrSetter == it.getMethod || originalGetterOrSetter == it.setMethod }
         }
 
-        fun findByGetterOrSetter(getterOrSetter: FunctionDescriptor, syntheticScope: SyntheticScope) =
+        fun findByGetterOrSetter(getterOrSetter: FunctionDescriptor, syntheticScopeProvider: SyntheticScopeProvider) =
                 findByGetterOrSetter(getterOrSetter,
                                      object : SyntheticScopes {
-                                         override val scopes: Collection<SyntheticScope> = listOf(syntheticScope)
+                                         override val scopeProviders: Collection<SyntheticScopeProvider> = listOf(syntheticScopeProvider)
                                      })
 
         fun propertyNameByGetMethodName(methodName: Name): Name?
@@ -288,7 +288,7 @@ class JavaSyntheticPropertiesMemberScope(
     }
 }
 
-class JavaSyntheticPropertiesProvider(private val storageManager: StorageManager) : SyntheticScope {
+class JavaSyntheticPropertiesProvider(private val storageManager: StorageManager) : SyntheticScopeProvider {
     private val makeSynthetic = storageManager.createMemoizedFunction<KotlinType, KotlinType> {
         if (it.constructor.declarationDescriptor is ClassDescriptor)
             SyntheticType(it, JavaSyntheticPropertiesMemberScope(it, storageManager))

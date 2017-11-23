@@ -26,7 +26,7 @@ class JavaSyntheticScopes(
         samConventionResolver: SamConversionResolver,
         deprecationResolver: DeprecationResolver
 ): SyntheticScopes {
-    override val scopes = listOf(
+    override val scopeProviders = listOf(
             JavaSyntheticPropertiesProvider(storageManager),
             SamAdapterSyntheticMembersProvider(storageManager, samConventionResolver, deprecationResolver),
             SamAdapterSyntheticStaticFunctionsProvider(storageManager, samConventionResolver),

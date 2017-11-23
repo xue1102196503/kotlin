@@ -172,7 +172,7 @@ class SamAdapterSyntheticMembersProvider(
         private val storageManager: StorageManager,
         private val samResolver: SamConversionResolver,
         private val deprecationResolver: DeprecationResolver
-) : SyntheticScope {
+) : SyntheticScopeProvider {
     private val makeSynthetic = storageManager.createMemoizedFunction<KotlinType, KotlinType> {
         SyntheticType(it, SamAdapterFunctionsMemberScope(storageManager, samResolver, deprecationResolver, it))
     }
@@ -218,7 +218,7 @@ private class SamAdapterSyntheticStaticFunctionsResolutionScope(
 class SamAdapterSyntheticStaticFunctionsProvider(
         private val storageManager: StorageManager,
         private val samResolver: SamConversionResolver
-) : SyntheticScope {
+) : SyntheticScopeProvider {
     private val makeSynthetic = storageManager.createMemoizedFunction<ResolutionScope, ResolutionScope> {
         SamAdapterSyntheticStaticFunctionsResolutionScope(storageManager, samResolver, it)
     }
@@ -327,7 +327,7 @@ private class SamAdapterSyntheticConstructorsScope(
 class SamAdapterSyntheticConstructorsProvider(
         private val storageManager: StorageManager,
         private val samResolver: SamConversionResolver
-) : SyntheticScope {
+) : SyntheticScopeProvider {
     private val makeSynthetic = storageManager.createMemoizedFunction<ResolutionScope, ResolutionScope> {
         SamAdapterSyntheticConstructorsScope(storageManager, samResolver, it)
     }

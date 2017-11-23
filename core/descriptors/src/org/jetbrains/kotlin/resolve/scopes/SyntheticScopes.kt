@@ -36,32 +36,32 @@ interface SyntheticMemberFunction: FunctionDescriptor
 interface SyntheticStaticFunction : FunctionDescriptor
 interface SyntheticConstructorFunction: FunctionDescriptor
 
-interface SyntheticScope {
+interface SyntheticScopeProvider {
     fun contriveType(type: KotlinType): KotlinType = type
     fun contriveScope(scope: ResolutionScope): ResolutionScope = scope
 }
 
 interface SyntheticScopes {
-    val scopes: Collection<SyntheticScope>
+    val scopeProviders: Collection<SyntheticScopeProvider>
 
     fun contriveType(type: KotlinType): KotlinType {
         var result = type
-        for (scope in scopes) {
-            result = scope.contriveType(result)
+        for (provider in scopeProviders) {
+            result = provider.contriveType(result)
         }
         return result
     }
 
     fun contriveScope(scope: ResolutionScope): ResolutionScope {
         var result = scope
-        for (provider in scopes) {
+        for (provider in scopeProviders) {
             result = provider.contriveScope(result)
         }
         return result
     }
 
     object Empty : SyntheticScopes {
-        override val scopes: Collection<SyntheticScope> = emptyList()
+        override val scopeProviders: Collection<SyntheticScopeProvider> = emptyList()
     }
 }
 
