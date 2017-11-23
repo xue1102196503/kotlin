@@ -40,7 +40,7 @@ fun canBePropertyAccessor(identifier: String): Boolean {
     return identifier.startsWith("get") || identifier.startsWith("is") || identifier.startsWith("set")
 }
 
-interface SyntheticJavaPropertyDescriptor : PropertyDescriptor {
+interface SyntheticJavaPropertyDescriptor : SyntheticProperty {
     val getMethod: FunctionDescriptor
     val setMethod: FunctionDescriptor?
 
@@ -167,9 +167,7 @@ class JavaSyntheticPropertiesMemberScope(
 
     override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> {
         originalScope().recordLookup(name, location)
-        val property = properties(name)
-        return if (property == null) super.getContributedVariables(name, location)
-        else super.getContributedVariables(name, location) + property
+        return listOfNotNull(properties(name)) + super.getContributedVariables(name, location)
     }
 
     override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean) =

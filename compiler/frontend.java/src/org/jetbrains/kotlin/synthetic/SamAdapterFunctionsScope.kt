@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.findCorrespondingSupertype
 import kotlin.properties.Delegates
 
-interface SamAdapterExtensionFunctionDescriptor : FunctionDescriptor, SyntheticMemberDescriptor<FunctionDescriptor> {
+interface SamAdapterExtensionFunctionDescriptor : SyntheticMemberFunction, SyntheticMemberDescriptor<FunctionDescriptor> {
     override val baseDescriptorForSynthetic: FunctionDescriptor
 }
 

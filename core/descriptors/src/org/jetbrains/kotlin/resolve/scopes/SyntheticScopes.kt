@@ -31,6 +31,11 @@ class SyntheticType(
         override val memberScope: MemberScope
 ) : WrappedType()
 
+interface SyntheticProperty: PropertyDescriptor
+interface SyntheticMemberFunction: FunctionDescriptor
+interface SyntheticStaticFuntion: FunctionDescriptor
+interface SyntheticConstructorFunction: FunctionDescriptor
+
 interface SyntheticScope {
     fun contriveType(type: KotlinType): KotlinType = type
     fun contriveScope(scope: ResolutionScope): ResolutionScope = scope
@@ -136,7 +141,7 @@ abstract class SyntheticMemberScope(storageManager: StorageManager) : MemberScop
 fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): List<PropertyDescriptor> {
     val result = receiverTypes.traverseClassDescriptorsAndSupertypesOnlyOnce { type ->
         val memberScope = contriveType(type).memberScope
-        val contributedVariables = memberScope.getContributedVariables(name, location)
+        val contributedVariables = memberScope.getContributedVariables(name, location).filterIsInstance<SyntheticProperty>()
         contributedVariables.singleOrNull()
     }
     return result
@@ -144,7 +149,7 @@ fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collectio
 
 fun SyntheticScopes.collectSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation) =
         receiverTypes.flatMap { type ->
-            contriveType(type).memberScope.getContributedFunctions(name, location)
+            contriveType(type).memberScope.getContributedFunctions(name, location).filterIsInstance<SyntheticMemberFunction>()
         }
 
 fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation) =
@@ -155,13 +160,13 @@ fun SyntheticScopes.collectSyntheticConstructors(scope: ResolutionScope, name: N
 
 fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>): List<PropertyDescriptor> {
     return receiverTypes.traverseClassDescriptorsAndSupertypesOnlyOnce {
-        contriveType(it).memberScope.getContributedDescriptors().cast<Collection<PropertyDescriptor>>()
+        contriveType(it).memberScope.getContributedDescriptors().filterIsInstance<SyntheticProperty>()
     }.flatten()
 }
 
 fun SyntheticScopes.collectSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>) =
         receiverTypes.flatMap { type ->
-            contriveType(type).memberScope.getContributedDescriptors().filterIsInstance<FunctionDescriptor>()
+            contriveType(type).memberScope.getContributedDescriptors().filterIsInstance<SyntheticMemberFunction>()
         }
 
 fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope) =

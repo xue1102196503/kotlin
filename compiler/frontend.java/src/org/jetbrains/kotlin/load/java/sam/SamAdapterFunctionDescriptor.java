@@ -25,8 +25,10 @@ import org.jetbrains.kotlin.descriptors.SourceElement;
 import org.jetbrains.kotlin.descriptors.annotations.Annotations;
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor;
 import org.jetbrains.kotlin.name.Name;
+import org.jetbrains.kotlin.resolve.scopes.SyntheticStaticFuntion;
 
-/* package */ class SamAdapterFunctionDescriptor extends JavaMethodDescriptor implements SamAdapterDescriptor<JavaMethodDescriptor> {
+/* package */ class SamAdapterFunctionDescriptor extends JavaMethodDescriptor implements SamAdapterDescriptor<JavaMethodDescriptor>,
+                                                                                         SyntheticStaticFuntion {
     private final JavaMethodDescriptor declaration;
 
     public SamAdapterFunctionDescriptor(@NotNull JavaMethodDescriptor declaration) {

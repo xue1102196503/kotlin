@@ -57,7 +57,7 @@ class KotlinPropertyAccessorsReferenceSearcher : QueryExecutorBase<PsiReference,
 
         if (!canBePropertyAccessor(method.name)) return null
         val functionDescriptor = method.getJavaMethodDescriptor() ?: return null
-        val syntheticExtensionsScope = JavaSyntheticPropertiesScopeProvider(LockBasedStorageManager(), LookupTracker.DO_NOTHING)
+        val syntheticExtensionsScope = JavaSyntheticPropertiesScopeProvider(LockBasedStorageManager())
         val property = SyntheticJavaPropertyDescriptor.findByGetterOrSetter(functionDescriptor, syntheticExtensionsScope) ?: return null
         return property.name.asString()
     }
