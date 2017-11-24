@@ -242,7 +242,7 @@ class K2JSDce : CLITool<K2JSDceArguments>() {
 
     private fun getModuleNameFromPath(path: String): String {
         val dotIndex = path.lastIndexOf('.')
-        val slashIndex = path.lastIndexOf('/')
+        val slashIndex = maxOf(path.lastIndexOf('/'), path.lastIndexOf('\\'))
         return path.substring(slashIndex + 1, if (dotIndex < 0) path.length else dotIndex)
     }
 
