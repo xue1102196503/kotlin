@@ -40,7 +40,7 @@ fun canBePropertyAccessor(identifier: String): Boolean {
     return identifier.startsWith("get") || identifier.startsWith("is") || identifier.startsWith("set")
 }
 
-interface SyntheticJavaPropertyDescriptor : SyntheticProperty {
+interface SyntheticJavaPropertyDescriptor : PropertyDescriptor {
     val getMethod: FunctionDescriptor
     val setMethod: FunctionDescriptor?
 
@@ -73,12 +73,12 @@ interface SyntheticJavaPropertyDescriptor : SyntheticProperty {
     }
 }
 
-class JavaSyntheticPropertiesMemberScope(
+class JavaSyntheticPropertiesScope(
         type: KotlinType,
-        storageManager: StorageManager
-) : SyntheticMemberScope(storageManager) {
+        storageManager: StorageManager,
+        override val wrappedScope: ResolutionScope
+) : SyntheticResolutionScope(storageManager) {
     private val ownerClass = type.constructor.declarationDescriptor as ClassDescriptor
-    override val wrappedScope = type.memberScope
     private val properties = storageManager.createMemoizedFunctionWithNullableValues<Name, PropertyDescriptor> {
         doGetProperty(it)
     }
@@ -167,7 +167,7 @@ class JavaSyntheticPropertiesMemberScope(
 
     override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> {
         originalScope().recordLookup(name, location)
-        return listOfNotNull(properties(name)) + super.getContributedVariables(name, location)
+        return listOfNotNull(properties(name)) + super.getContributedVariables(name, location).filterIsInstance<PropertyDescriptor>()
     }
 
     override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean) =
@@ -289,12 +289,14 @@ class JavaSyntheticPropertiesMemberScope(
 }
 
 class JavaSyntheticPropertiesProvider(private val storageManager: StorageManager) : SyntheticScopeProvider {
-    private val makeSynthetic = storageManager.createMemoizedFunction<KotlinType, KotlinType> {
-        if (it.constructor.declarationDescriptor is ClassDescriptor)
-            SyntheticType(it, JavaSyntheticPropertiesMemberScope(it, storageManager))
-        else it
+    private val makeSynthetic = storageManager.createMemoizedFunction<Pair<ResolutionScope, KotlinType>, ResolutionScope> { (scope, type) ->
+        JavaSyntheticPropertiesScope(type, storageManager, scope)
     }
 
-    override fun contriveType(type: KotlinType) = makeSynthetic(type)
+    override fun provideSyntheticScope(scope: ResolutionScope, metadata: SyntheticScopesMetadata): ResolutionScope {
+        if (!metadata.needExtensionProperties) return scope
+        val type = metadata.type ?: error("Synthetic properties provider requires type")
+        return makeSynthetic(Pair(scope, type))
+    }
 }
 

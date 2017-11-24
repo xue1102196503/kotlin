@@ -22,10 +22,9 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor;
 import org.jetbrains.kotlin.descriptors.SourceElement;
 import org.jetbrains.kotlin.descriptors.annotations.Annotations;
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor;
-import org.jetbrains.kotlin.resolve.scopes.SyntheticConstructorFunction;
 
 /* package */ class SamAdapterClassConstructorDescriptor extends JavaClassConstructorDescriptor
-        implements SamAdapterDescriptor<JavaClassConstructorDescriptor>, SyntheticConstructorFunction {
+        implements SamAdapterDescriptor<JavaClassConstructorDescriptor> {
     private final JavaClassConstructorDescriptor declaration;
 
     public SamAdapterClassConstructorDescriptor(@NotNull JavaClassConstructorDescriptor declaration) {

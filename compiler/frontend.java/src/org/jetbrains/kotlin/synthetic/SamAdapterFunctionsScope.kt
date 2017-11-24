@@ -40,17 +40,17 @@ import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.findCorrespondingSupertype
 import kotlin.properties.Delegates
 
-interface SamAdapterExtensionFunctionDescriptor : SyntheticMemberFunction, SyntheticMemberDescriptor<FunctionDescriptor> {
+interface SamAdapterExtensionFunctionDescriptor : FunctionDescriptor, SyntheticMemberDescriptor<FunctionDescriptor> {
     override val baseDescriptorForSynthetic: FunctionDescriptor
 }
 
-private class SamAdapterFunctionsMemberScope(
+private class SamAdapterFunctionsScope(
         storageManager: StorageManager,
         private val samResolver: SamConversionResolver,
         private val deprecationResolver: DeprecationResolver,
-        private val type: KotlinType
-) : SyntheticMemberScope(storageManager) {
-    override val wrappedScope = type.memberScope
+        private val type: KotlinType,
+        override val wrappedScope: ResolutionScope
+) : SyntheticResolutionScope(storageManager) {
     private val functions = storageManager.createMemoizedFunction<Name, List<SimpleFunctionDescriptor>> {
         doGetFunctions(it)
     }
@@ -173,14 +173,18 @@ class SamAdapterSyntheticMembersProvider(
         private val samResolver: SamConversionResolver,
         private val deprecationResolver: DeprecationResolver
 ) : SyntheticScopeProvider {
-    private val makeSynthetic = storageManager.createMemoizedFunction<KotlinType, KotlinType> {
-        SyntheticType(it, SamAdapterFunctionsMemberScope(storageManager, samResolver, deprecationResolver, it))
+    private val makeSynthetic = storageManager.createMemoizedFunction<Pair<ResolutionScope, KotlinType>, ResolutionScope> { (scope, type) ->
+        SamAdapterFunctionsScope(storageManager, samResolver, deprecationResolver, type, scope)
     }
 
-    override fun contriveType(type: KotlinType) = makeSynthetic(type)
+    override fun provideSyntheticScope(scope: ResolutionScope, metadata: SyntheticScopesMetadata): ResolutionScope {
+        if (!metadata.needMemberFunctions) return scope
+        val type = metadata.type ?: error("SAM members provider requires type")
+        return makeSynthetic(Pair(scope, type))
+    }
 }
 
-private class SamAdapterSyntheticStaticFunctionsResolutionScope(
+private class SamAdapterSyntheticStaticFunctionsScope(
         storageManager: StorageManager,
         private val samResolver: SamConversionResolver,
         override val wrappedScope: ResolutionScope
@@ -220,10 +224,13 @@ class SamAdapterSyntheticStaticFunctionsProvider(
         private val samResolver: SamConversionResolver
 ) : SyntheticScopeProvider {
     private val makeSynthetic = storageManager.createMemoizedFunction<ResolutionScope, ResolutionScope> {
-        SamAdapterSyntheticStaticFunctionsResolutionScope(storageManager, samResolver, it)
+        SamAdapterSyntheticStaticFunctionsScope(storageManager, samResolver, it)
     }
 
-    override fun contriveScope(scope: ResolutionScope): ResolutionScope = makeSynthetic(scope)
+    override fun provideSyntheticScope(scope: ResolutionScope, metadata: SyntheticScopesMetadata): ResolutionScope {
+        if (!metadata.needStaticFunctions) return scope
+        return makeSynthetic(scope)
+    }
 }
 
 private class SamAdapterSyntheticConstructorsScope(
@@ -243,10 +250,7 @@ private class SamAdapterSyntheticConstructorsScope(
 
     private val samConstructorForTypeAliasConstructor =
             storageManager.createMemoizedFunctionWithNullableValues<Pair<ClassConstructorDescriptor, TypeAliasDescriptor>, TypeAliasConstructorDescriptor> { (constructor, typeAliasDescriptor) ->
-                run {
-                    val descriptor = TypeAliasConstructorDescriptorImpl.createIfAvailable(storageManager, typeAliasDescriptor, constructor) as? TypeAliasConstructorDescriptorImpl ?: return@run null
-                    SamAdapterTypeAliasConstructorDescriptor(descriptor)
-                }
+                TypeAliasConstructorDescriptorImpl.createIfAvailable(storageManager, typeAliasDescriptor, constructor)
             }
 
     override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
@@ -278,10 +282,8 @@ private class SamAdapterSyntheticConstructorsScope(
         return samConstructorForJavaConstructor(constructor)
     }
 
-    private fun getAllSamConstructors(classifier: ClassifierDescriptor): List<FunctionDescriptor> {
-        val result = getSamAdaptersFromConstructors(classifier) + listOfNotNull(getSamConstructor(classifier))
-        return result
-    }
+    private fun getAllSamConstructors(classifier: ClassifierDescriptor): List<FunctionDescriptor> =
+            getSamAdaptersFromConstructors(classifier) + listOfNotNull(getSamConstructor(classifier))
 
     private fun getSamAdaptersFromConstructors(classifier: ClassifierDescriptor): List<FunctionDescriptor> {
         if (classifier !is JavaClassDescriptor) return emptyList()
@@ -310,18 +312,6 @@ private class SamAdapterSyntheticConstructorsScope(
         return SingleAbstractMethodUtils.createTypeAliasSamConstructorFunction(
                 classifier, samConstructorForClassifier(classDescriptor), samResolver)
     }
-
-    private class SamAdapterTypeAliasConstructorDescriptor(
-            original: TypeAliasConstructorDescriptorImpl
-    ) : TypeAliasConstructorDescriptorImpl(
-            original.storageManager,
-            original.typeAliasDescriptor,
-            original.underlyingConstructorDescriptor,
-            original.original,
-            original.annotations,
-            original.kind,
-            original.source
-    ), SyntheticConstructorFunction
 }
 
 class SamAdapterSyntheticConstructorsProvider(
@@ -332,7 +322,10 @@ class SamAdapterSyntheticConstructorsProvider(
         SamAdapterSyntheticConstructorsScope(storageManager, samResolver, it)
     }
 
-    override fun contriveScope(scope: ResolutionScope): ResolutionScope = makeSynthetic(scope)
+    override fun provideSyntheticScope(scope: ResolutionScope, metadata: SyntheticScopesMetadata): ResolutionScope {
+        if (!metadata.needConstructors) return scope
+        return makeSynthetic(scope)
+    }
 }
 
 private fun FunctionDescriptor.substituteForReceiverType(type: KotlinType): FunctionDescriptor? {

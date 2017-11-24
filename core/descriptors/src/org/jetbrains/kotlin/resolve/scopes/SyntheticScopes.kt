@@ -22,40 +22,27 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeConstructor
-import org.jetbrains.kotlin.types.WrappedType
-import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
-class SyntheticType(
-        override val delegate: KotlinType,
-        override val memberScope: MemberScope
-) : WrappedType()
-
-interface SyntheticProperty: PropertyDescriptor
-interface SyntheticMemberFunction: FunctionDescriptor
-interface SyntheticStaticFunction : FunctionDescriptor
-interface SyntheticConstructorFunction: FunctionDescriptor
+data class SyntheticScopesMetadata(
+        val type: KotlinType? = null,
+        val needExtensionProperties: Boolean = false,
+        val needMemberFunctions: Boolean = false,
+        val needStaticFunctions: Boolean = false,
+        val needConstructors: Boolean = false
+)
 
 interface SyntheticScopeProvider {
-    fun contriveType(type: KotlinType): KotlinType = type
-    fun contriveScope(scope: ResolutionScope): ResolutionScope = scope
+    fun provideSyntheticScope(scope: ResolutionScope, metadata: SyntheticScopesMetadata): ResolutionScope = scope
 }
 
 interface SyntheticScopes {
     val scopeProviders: Collection<SyntheticScopeProvider>
 
-    fun contriveType(type: KotlinType): KotlinType {
-        var result = type
-        for (provider in scopeProviders) {
-            result = provider.contriveType(result)
-        }
-        return result
-    }
-
-    fun contriveScope(scope: ResolutionScope): ResolutionScope {
+    fun provideSyntheticScope(scope: ResolutionScope, metadata: SyntheticScopesMetadata): ResolutionScope {
         var result = scope
         for (provider in scopeProviders) {
-            result = provider.contriveScope(result)
+            result = provider.provideSyntheticScope(result, metadata)
         }
         return result
     }
@@ -103,106 +90,55 @@ abstract class SyntheticResolutionScope(storageManager: StorageManager) : Resolu
     }
 }
 
-abstract class SyntheticMemberScope(storageManager: StorageManager) : MemberScope {
-    protected abstract val wrappedScope: MemberScope
-    protected val originalScope = storageManager.createLazyValue {
-        doGetOriginal()
-    }
-
-    open protected fun doGetOriginal(): MemberScope {
-        var result = wrappedScope
-        while (result is SyntheticMemberScope) {
-            result = result.wrappedScope
+fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): List<PropertyDescriptor> =
+        receiverTypes.traverseClassDescriptorsAndSupertypesOnlyOnce { type ->
+            val scope = provideSyntheticScope(type.memberScope, SyntheticScopesMetadata(type = type, needExtensionProperties = true))
+            val contributedVariables = scope.getContributedVariables(name, location).cast<Collection<PropertyDescriptor>>()
+            contributedVariables.singleOrNull()
         }
-        return result
-    }
 
-    override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? =
-            if (wrappedScope is SyntheticMemberScope) wrappedScope.getContributedClassifier(name, location) else null
-
-    override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> =
-            if (wrappedScope is SyntheticMemberScope) wrappedScope.getContributedVariables(name, location) else emptyList()
-
-    override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<SimpleFunctionDescriptor> =
-            if (wrappedScope is SyntheticMemberScope) wrappedScope.getContributedFunctions(name, location) else emptyList()
-
-    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> =
-            if (wrappedScope is SyntheticMemberScope) wrappedScope.getContributedDescriptors(kindFilter, nameFilter) else emptyList()
-
-    override fun getFunctionNames(): Set<Name> =
-            if (wrappedScope is SyntheticMemberScope) wrappedScope.getFunctionNames() else emptySet()
-
-    override fun getVariableNames(): Set<Name> =
-            if (wrappedScope is SyntheticMemberScope) wrappedScope.getVariableNames() else emptySet()
-
-    override fun getClassifierNames(): Set<Name>? =
-            if (wrappedScope is SyntheticMemberScope) wrappedScope.getClassifierNames() else null
-
-    override fun printScopeStructure(p: Printer) {
-        if (wrappedScope is SyntheticMemberScope) wrappedScope.printScopeStructure(p)
-    }
-}
-
-fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): List<PropertyDescriptor> {
-    val result = receiverTypes.traverseClassDescriptorsAndSupertypesOnlyOnce { type ->
-        val memberScope = contriveType(type).memberScope
-        val contributedVariables = memberScope.getContributedVariables(name, location).filterIsInstance<SyntheticProperty>()
-        contributedVariables.singleOrNull()
-    }
-    return result
-}
-
-fun SyntheticScopes.collectSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation) =
+fun SyntheticScopes.collectSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>, name: Name, location: LookupLocation): List<FunctionDescriptor> =
         receiverTypes.flatMap { type ->
-            val memberScope = contriveType(type).memberScope
-            val contributedFunctions = memberScope.getContributedFunctions(name, location)
-            contributedFunctions.filterIsInstance<SyntheticMemberFunction>()
+            val scope = provideSyntheticScope(type.memberScope, SyntheticScopesMetadata(type = type, needMemberFunctions = true))
+            scope.getContributedFunctions(name, location)
         }
 
-fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation): List<SyntheticStaticFunction> {
-    val contributedFunctions = contriveScope(scope).getContributedFunctions(name, location)
-    val result = contributedFunctions.filterIsInstance<SyntheticStaticFunction>()
-    return result
+fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
+    val syntheticScope = provideSyntheticScope(scope, SyntheticScopesMetadata(needStaticFunctions = true))
+    return syntheticScope.getContributedFunctions(name, location)
 }
 
-fun SyntheticScopes.collectSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation): List<SyntheticConstructorFunction> {
-    val contributedFunctions = contriveScope(scope).getContributedFunctions(name, location)
-    val result = contributedFunctions.filterIsInstance<SyntheticConstructorFunction>()
-    return result
+fun SyntheticScopes.collectSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
+    val syntheticScope = provideSyntheticScope(scope, SyntheticScopesMetadata(needConstructors = true))
+    return syntheticScope.getContributedFunctions(name, location)
 }
 
 fun SyntheticScopes.collectSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>): List<PropertyDescriptor> {
     return receiverTypes.traverseClassDescriptorsAndSupertypesOnlyOnce {
-        val memberScope = contriveType(it).memberScope
-        val contributedDescriptors = memberScope.getContributedDescriptors()
-        contributedDescriptors.filterIsInstance<SyntheticProperty>()
+        val scope = provideSyntheticScope(it.memberScope, SyntheticScopesMetadata(type = it, needExtensionProperties = true))
+        scope.getContributedDescriptors().cast<Collection<PropertyDescriptor>>()
     }.flatten()
 }
 
-fun SyntheticScopes.collectSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>) =
+fun SyntheticScopes.collectSyntheticMemberFunctions(receiverTypes: Collection<KotlinType>): List<FunctionDescriptor> =
         receiverTypes.flatMap { type ->
-            val memberScope = contriveType(type).memberScope
-            val contributedDescriptors = memberScope.getContributedDescriptors()
-            contributedDescriptors.filterIsInstance<SyntheticMemberFunction>()
+            val scope = provideSyntheticScope(type.memberScope, SyntheticScopesMetadata(type = type, needMemberFunctions = true))
+            scope.getContributedDescriptors().cast<Collection<FunctionDescriptor>>()
         }
 
-fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope): List<SyntheticStaticFunction> {
-    val contributedDescriptors = contriveScope(scope).getContributedDescriptors()
-    val result = contributedDescriptors.filterIsInstance<SyntheticStaticFunction>()
-    return result
+fun SyntheticScopes.collectSyntheticStaticFunctions(scope: ResolutionScope): Collection<FunctionDescriptor> {
+    val syntheticScope = provideSyntheticScope(scope, SyntheticScopesMetadata(needStaticFunctions = true))
+    return syntheticScope.getContributedDescriptors().cast()
 }
 
-fun SyntheticScopes.collectSyntheticConstructors(scope: ResolutionScope): List<SyntheticConstructorFunction> {
-    val contributedDescriptors = contriveScope(scope).getContributedDescriptors()
-    val result = contributedDescriptors.filterIsInstance<SyntheticConstructorFunction>()
-    return result
+fun SyntheticScopes.collectSyntheticConstructors(scope: ResolutionScope): Collection<FunctionDescriptor> {
+    val syntheticScope = provideSyntheticScope(scope, SyntheticScopesMetadata(needConstructors = true))
+    return syntheticScope.getContributedDescriptors().cast()
 }
 
 fun SyntheticScopes.collectSyntheticConstructors(constructor: ConstructorDescriptor): Collection<ConstructorDescriptor> {
-    val contributedDescriptors = contriveScope(SyntheticResolutionScope.createScopeForConstructor(constructor)).getContributedDescriptors()
-    val instance = contributedDescriptors.filterIsInstance<SyntheticConstructorFunction>()
-    val result = instance.cast<Collection<ConstructorDescriptor>>()
-    return result
+    val syntheticScope = provideSyntheticScope(SyntheticResolutionScope.createScopeForConstructor(constructor), SyntheticScopesMetadata(needConstructors = true))
+    return syntheticScope.getContributedDescriptors().cast()
 }
 
 private fun <T> Collection<KotlinType>.traverseClassDescriptorsAndSupertypesOnlyOnce(doStuff: (KotlinType) -> T?): List<T> {
