@@ -230,9 +230,9 @@ class K2JSDce : CLITool<K2JSDceArguments>() {
                 .filter { File(it.path.metaJs()).exists() }
                 .map { entry ->
                     val moduleName = getModuleNameFromPath(entry.name)
-                    val pathToSourceMapCandidate = "${entry.name}.map"
+                    val pathToSourceMapCandidate = "${entry.path}.map"
                     val pathToSourceMap = if (File(pathToSourceMapCandidate).exists()) pathToSourceMapCandidate else null
-                    InputFile(InputResource.file(entry.name), pathToSourceMap?.let { InputResource.file(it) },
+                    InputFile(InputResource.file(entry.path), pathToSourceMap?.let { InputResource.file(it) },
                               File(baseDir, "$moduleName.js").absolutePath, moduleName)
                 }
                 .toList()
