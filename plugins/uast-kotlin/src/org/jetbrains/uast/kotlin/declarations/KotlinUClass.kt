@@ -18,6 +18,7 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForLocalDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForScript
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -31,9 +32,11 @@ import org.jetbrains.uast.kotlin.declarations.KotlinUMethod
 import org.jetbrains.uast.kotlin.declarations.UastLightIdentifier
 
 abstract class AbstractKotlinUClass(private val givenParent: UElement?) : AbstractJavaUClass() {
-    override val uastParent: UElement? by lz {
-        givenParent ?: KotlinUastLanguagePlugin().convertElementWithParent(psi.parent ?: psi.containingFile, null)
-    }
+    override val uastParent: UElement? by lz { givenParent ?: convertParent() }
+
+    open protected fun convertParent() =
+            //TODO: should be merged with KotlinAbstractUElement.convertParent() after detaching from AbstractJavaUClass
+            KotlinUastLanguagePlugin().convertElementWithParent(psi.parent ?: psi.containingFile, null)
 }
 
 open class KotlinUClass private constructor(
@@ -101,18 +104,17 @@ open class KotlinUClass private constructor(
 class KotlinConstructorUMethod(
         private val ktClass: KtClassOrObject?,
         override val psi: KtLightMethod,
-        override val uastParent: UElement?
-): KotlinUMethod(psi, uastParent) {
+        givenParent: UElement?
+) : KotlinUMethod(psi, givenParent) {
 
     val isPrimary: Boolean
-        get() = psi.kotlinOrigin is KtPrimaryConstructor
+        get() = psi.kotlinOrigin.let { it is KtPrimaryConstructor || it is KtObjectDeclaration }
 
     override val uastBody: UExpression? by lz {
         val delegationCall: KtCallElement? = psi.kotlinOrigin.let {
-            when (it) {
-                is KtPrimaryConstructor, is KtObjectDeclaration ->
-                    ktClass?.superTypeListEntries?.firstIsInstanceOrNull<KtSuperTypeCallEntry>()
-                is KtSecondaryConstructor -> it.getDelegationCall()
+            when {
+                isPrimary -> ktClass?.superTypeListEntries?.firstIsInstanceOrNull<KtSuperTypeCallEntry>()
+                it is KtSecondaryConstructor -> it.getDelegationCall()
                 else -> null
             }
         }
@@ -136,7 +138,7 @@ class KotlinUAnonymousClass(
         psi: PsiAnonymousClass,
         givenParent: UElement?
 ) : AbstractKotlinUClass(givenParent), UAnonymousClass, PsiAnonymousClass by psi {
-    
+
     override val psi: PsiAnonymousClass = unwrap<UAnonymousClass, PsiAnonymousClass>(psi)
 
     override fun getOriginalElement(): PsiElement? = super<AbstractKotlinUClass>.getOriginalElement()
@@ -154,6 +156,10 @@ class KotlinUAnonymousClass(
             val ktClassOrObject = (psi.originalElement as? KtLightClass)?.kotlinOrigin as? KtObjectDeclaration ?: return null 
             return UIdentifier(ktClassOrObject.getObjectKeyword(), this)
         }
+
+    override fun convertParent(): UElement? =
+            (this.psi as? KtLightClassForLocalDeclaration)?.kotlinOrigin?.parent?.toUElement()
+            ?: super.convertParent()
 }
 
 class KotlinScriptUClass(

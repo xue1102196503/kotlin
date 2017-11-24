@@ -32,8 +32,10 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.JavaUastLanguagePlugin
 import org.jetbrains.uast.kotlin.declarations.KotlinUMethod
@@ -309,6 +311,15 @@ internal object KotlinConverter {
             is KtWhenEntry -> el<USwitchClauseExpressionWithBody>(build(::KotlinUSwitchEntry))
             is KtWhenCondition -> convertWhenCondition(element, givenParent, requiredType)
             is KtTypeReference -> el<UTypeReferenceExpression> { LazyKotlinUTypeReferenceExpression(element, givenParent) }
+            is KtConstructorDelegationCall ->
+                el<UCallExpression> { KotlinUFunctionCallExpression(element, givenParent) }
+            is KtSuperTypeCallEntry ->
+                el<UExpression> {
+                    //TODO: dont search all parents
+                    val ktObjectLiteralExpression = element.parents.firstIsInstanceOrNull<KtObjectLiteralExpression>()
+                    ktObjectLiteralExpression?.let { it.toUElementOfType<UExpression>()!! }
+                    ?: KotlinUFunctionCallExpression(element, givenParent)
+                }
 
             else -> {
                 if (element is LeafPsiElement && element.elementType == KtTokens.IDENTIFIER) {
