@@ -34,9 +34,15 @@ import org.jetbrains.uast.kotlin.declarations.UastLightIdentifier
 abstract class AbstractKotlinUClass(private val givenParent: UElement?) : AbstractJavaUClass() {
     override val uastParent: UElement? by lz { givenParent ?: convertParent() }
 
-    open protected fun convertParent() =
-            //TODO: should be merged with KotlinAbstractUElement.convertParent() after detaching from AbstractJavaUClass
-            KotlinUastLanguagePlugin().convertElementWithParent(psi.parent ?: psi.containingFile, null)
+    //TODO: should be merged with KotlinAbstractUElement.convertParent() after detaching from AbstractJavaUClass
+    open fun convertParent(): UElement? =
+            (this.psi as? KtLightClassForLocalDeclaration)?.kotlinOrigin?.parent?.let {
+                when (it) {
+                    is KtClassBody -> it.parent.toUElement() // TODO: it seems that `class_body`-s are never created in kotlin uast in top-down walk, probably they should be completely skipped and always unwrapped
+                    else -> it.toUElement()
+                }
+            } ?: (psi.parent ?: psi.containingFile).toUElement()
+
 }
 
 open class KotlinUClass private constructor(
@@ -112,7 +118,7 @@ class KotlinConstructorUMethod(
 ) : KotlinUMethod(psi, givenParent) {
 
     val isPrimary: Boolean
-        get() = psi.kotlinOrigin.let { it is KtPrimaryConstructor || it is KtObjectDeclaration }
+        get() = psi.kotlinOrigin.let { it is KtPrimaryConstructor || it is KtClassOrObject }
 
     override val uastBody: UExpression? by lz {
         val delegationCall: KtCallElement? = psi.kotlinOrigin.let {
@@ -161,9 +167,6 @@ class KotlinUAnonymousClass(
             return UIdentifier(ktClassOrObject.getObjectKeyword(), this)
         }
 
-    override fun convertParent(): UElement? =
-            (this.psi as? KtLightClassForLocalDeclaration)?.kotlinOrigin?.parent?.toUElement()
-            ?: super.convertParent()
 }
 
 class KotlinScriptUClass(

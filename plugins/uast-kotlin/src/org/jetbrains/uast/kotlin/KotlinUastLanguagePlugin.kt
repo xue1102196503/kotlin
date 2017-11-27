@@ -32,10 +32,9 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.JavaUastLanguagePlugin
 import org.jetbrains.uast.kotlin.declarations.KotlinUMethod
@@ -315,7 +314,8 @@ internal object KotlinConverter {
                 el<UCallExpression> { KotlinUFunctionCallExpression(element, givenParent) }
             is KtSuperTypeCallEntry ->
                 el<UExpression> {
-                    element.parents.take(4).firstIsInstanceOrNull<KtObjectLiteralExpression>()?.toUElementOfType<UExpression>()
+                    (element.getParentOfType<KtClassOrObject>(true)?.parent as? KtObjectLiteralExpression)
+                            ?.toUElementOfType<UExpression>()
                     ?: KotlinUFunctionCallExpression(element, givenParent)
                 }
 
