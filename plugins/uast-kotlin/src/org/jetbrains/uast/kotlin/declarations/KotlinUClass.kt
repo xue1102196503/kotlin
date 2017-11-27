@@ -85,8 +85,12 @@ open class KotlinUClass private constructor(
             }
         }
 
-        return psi.methods
+        fun isDelegatedMethod(psiMethod: PsiMethod) = psiMethod is KtLightMethod && psiMethod.isDelegated
+
+        return psi.methods.asSequence()
+                .filterNot(::isDelegatedMethod)
                 .map(::createUMethod)
+                .toList()
                 .toTypedArray()
     }
 
