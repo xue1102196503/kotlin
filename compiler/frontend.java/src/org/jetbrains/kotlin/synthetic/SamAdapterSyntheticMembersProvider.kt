@@ -42,8 +42,8 @@ private class SamAdapterFunctionsScope(
         private val samResolver: SamConversionResolver,
         private val deprecationResolver: DeprecationResolver,
         private val type: KotlinType,
-        override val wrappedScope: ResolutionScope
-) : SyntheticResolutionScope(storageManager) {
+        wrappedScope: ResolutionScope
+) : SyntheticResolutionScope(storageManager, wrappedScope) {
     private val functions = storageManager.createMemoizedFunction<Name, List<SimpleFunctionDescriptor>> {
         doGetFunctions(it)
     }
@@ -51,12 +51,12 @@ private class SamAdapterFunctionsScope(
         doGetDescriptors()
     }
 
-    private fun doGetDescriptors() = originalScope().getContributedDescriptors(DescriptorKindFilter.FUNCTIONS)
+    private fun doGetDescriptors() = getContributedDescriptorsShadowOriginal(DescriptorKindFilter.FUNCTIONS)
             .filterIsInstance<FunctionDescriptor>()
             .flatMap { getContributedFunctions(it.name, NoLookupLocation.FROM_SYNTHETIC_SCOPE) }
 
     private fun doGetFunctions(name: Name) =
-            originalScope().getContributedFunctions(name, NoLookupLocation.FROM_SYNTHETIC_SCOPE).mapNotNull {
+            getContributedFunctionsShadowOriginal(name, NoLookupLocation.FROM_SYNTHETIC_SCOPE).mapNotNull {
                 wrapFunction(it.original)?.substituteForReceiverType(type) as? SimpleFunctionDescriptor
             }
 

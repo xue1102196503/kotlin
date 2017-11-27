@@ -33,8 +33,8 @@ import org.jetbrains.kotlin.storage.StorageManager
 private class SamAdapterSyntheticConstructorsScope(
         private val storageManager: StorageManager,
         private val samResolver: SamConversionResolver,
-        override val wrappedScope: ResolutionScope
-) : SyntheticResolutionScope(storageManager) {
+        wrappedScope: ResolutionScope
+) : SyntheticResolutionScope(storageManager, wrappedScope) {
     private val samConstructorForClassifier =
             storageManager.createMemoizedFunction<JavaClassDescriptor, SamConstructorDescriptor> { classifier ->
                 SingleAbstractMethodUtils.createSamConstructorFunction(classifier.containingDeclaration, classifier, samResolver)
@@ -51,13 +51,14 @@ private class SamAdapterSyntheticConstructorsScope(
             }
 
     override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
-        val classifier = originalScope().getContributedClassifier(name, location) ?: return super.getContributedFunctions(name, location)
+        val classifier = getContributedClassisfierShadowOriginal(name, location) ?: return super.getContributedFunctions(name, location)
         return getAllSamConstructors(classifier) + super.getContributedFunctions(name, location)
     }
 
     override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> {
-        val contributedDescriptors = originalScope().getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS)
-        val constructor = (contributedDescriptors.singleOrNull() as? ConstructorDescriptor) ?: return processClassifierDescriptors(contributedDescriptors, kindFilter, nameFilter)
+        val contributedDescriptors = getContributedDescriptorsShadowOriginal(DescriptorKindFilter.CLASSIFIERS)
+        val constructor = (contributedDescriptors.singleOrNull() as? ConstructorDescriptor)
+                          ?: return processClassifierDescriptors(contributedDescriptors, kindFilter, nameFilter)
         return listOfNotNull(getSyntheticConstructor(constructor)) + super.getContributedDescriptors(kindFilter, nameFilter)
     }
 

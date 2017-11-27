@@ -76,8 +76,8 @@ interface SyntheticJavaPropertyDescriptor : PropertyDescriptor {
 class JavaSyntheticPropertiesScope(
         type: KotlinType,
         storageManager: StorageManager,
-        override val wrappedScope: ResolutionScope
-) : SyntheticResolutionScope(storageManager) {
+        wrappedScope: ResolutionScope
+) : SyntheticResolutionScope(storageManager, wrappedScope) {
     private val ownerClass = type.constructor.declarationDescriptor as ClassDescriptor
     private val properties = storageManager.createMemoizedFunctionWithNullableValues<Name, PropertyDescriptor> {
         doGetProperty(it)
@@ -86,14 +86,12 @@ class JavaSyntheticPropertiesScope(
         doGetDescriptors()
     }
 
-    private fun doGetDescriptors(): List<PropertyDescriptor> {
-        return originalScope().getContributedDescriptors(DescriptorKindFilter.FUNCTIONS)
-                .filterIsInstance<FunctionDescriptor>()
-                .mapNotNull {
-                    val propertyName = SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(it.name) ?: return@mapNotNull null
-                    getContributedVariables(propertyName, NoLookupLocation.FROM_SYNTHETIC_SCOPE).singleOrNull()
-                }
-    }
+    private fun doGetDescriptors(): List<PropertyDescriptor> = getContributedDescriptorsShadowOriginal(DescriptorKindFilter.FUNCTIONS)
+            .filterIsInstance<FunctionDescriptor>()
+            .mapNotNull {
+                val propertyName = SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(it.name) ?: return@mapNotNull null
+                getContributedVariables(propertyName, NoLookupLocation.FROM_SYNTHETIC_SCOPE).singleOrNull()
+            }
 
     private fun doGetProperty(name: Name): PropertyDescriptor? {
         if (name.isSpecial) return null
@@ -104,11 +102,11 @@ class JavaSyntheticPropertiesScope(
 
         val possibleGetters = possibleGetMethodNames(name)
         val getter = possibleGetters
-                             .flatMap { originalScope().getContributedFunctions(it, NoLookupLocation.FROM_SYNTHETIC_SCOPE) }
+                             .flatMap { getContributedFunctionsShadowOriginal(it, NoLookupLocation.FROM_SYNTHETIC_SCOPE) }
                              .singleOrNull { it.hasJavaOriginInHierarchy() && isGoodGetMethod(it) } ?: return null
 
         val setterName = setMethodName(getter.name)
-        val setter = originalScope().getContributedFunctions(setterName, NoLookupLocation.FROM_SYNTHETIC_SCOPE)
+        val setter = getContributedFunctionsShadowOriginal(setterName, NoLookupLocation.FROM_SYNTHETIC_SCOPE)
                 .singleOrNull { isGoodSetMethod(it, getter) }
 
         val type = getter.returnType!!
@@ -166,7 +164,7 @@ class JavaSyntheticPropertiesScope(
     }
 
     override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> {
-        originalScope().recordLookup(name, location)
+        recordLookup(name, location)
         return listOfNotNull(properties(name)) + super.getContributedVariables(name, location).filterIsInstance<PropertyDescriptor>()
     }
 

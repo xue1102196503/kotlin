@@ -30,8 +30,8 @@ import org.jetbrains.kotlin.storage.StorageManager
 private class SamAdapterSyntheticStaticFunctionsScope(
         storageManager: StorageManager,
         private val samResolver: SamConversionResolver,
-        override val wrappedScope: ResolutionScope
-) : SyntheticResolutionScope(storageManager) {
+        wrappedScope: ResolutionScope
+) : SyntheticResolutionScope(storageManager, wrappedScope) {
     val functions = storageManager.createMemoizedFunction<Name, List<FunctionDescriptor>> {
         doGetFunctions(it)
     }
@@ -41,7 +41,7 @@ private class SamAdapterSyntheticStaticFunctionsScope(
     }
 
     private fun doGetFunctions(name: Name) =
-            originalScope().getContributedFunctions(name, NoLookupLocation.FROM_SYNTHETIC_SCOPE).mapNotNull { wrapFunction(it) }
+            getContributedFunctionsShadowOriginal(name, NoLookupLocation.FROM_SYNTHETIC_SCOPE).mapNotNull { wrapFunction(it) }
 
     private fun wrapFunction(function: DeclarationDescriptor): FunctionDescriptor? {
         if (function !is JavaMethodDescriptor) return null
@@ -52,7 +52,7 @@ private class SamAdapterSyntheticStaticFunctionsScope(
     }
 
     private fun doGetDescriptors(): List<FunctionDescriptor> =
-            originalScope().getContributedDescriptors(DescriptorKindFilter.FUNCTIONS).mapNotNull { wrapFunction(it) }
+            getContributedDescriptorsShadowOriginal(DescriptorKindFilter.FUNCTIONS).mapNotNull { wrapFunction(it) }
 
     override fun getContributedFunctions(name: Name, location: LookupLocation): List<FunctionDescriptor> {
         return functions(name) + super.getContributedFunctions(name, location)
