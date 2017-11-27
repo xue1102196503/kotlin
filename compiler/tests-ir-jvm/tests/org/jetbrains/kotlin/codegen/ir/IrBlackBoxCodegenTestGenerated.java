@@ -14519,6 +14519,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             doTest(fileName);
         }
 
+        @TestMetadata("forInStringVarUpdatedInLoopBody.kt")
+        public void testForInStringVarUpdatedInLoopBody() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/ranges/forInStringVarUpdatedInLoopBody.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("forIntRange.kt")
         public void testForIntRange() throws Exception {
             String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/ranges/forIntRange.kt");
