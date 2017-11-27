@@ -32,8 +32,10 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.JavaUastLanguagePlugin
 import org.jetbrains.uast.kotlin.declarations.KotlinUMethod
@@ -312,7 +314,10 @@ internal object KotlinConverter {
             is KtConstructorDelegationCall ->
                 el<UCallExpression> { KotlinUFunctionCallExpression(element, givenParent) }
             is KtSuperTypeCallEntry ->
-                el<UCallExpression> { KotlinUFunctionCallExpression(element, givenParent) }
+                el<UExpression> {
+                    element.parents.take(4).firstIsInstanceOrNull<KtObjectLiteralExpression>()?.toUElementOfType<UExpression>()
+                    ?: KotlinUFunctionCallExpression(element, givenParent)
+                }
 
             else -> {
                 if (element is LeafPsiElement && element.elementType == KtTokens.IDENTIFIER) {
