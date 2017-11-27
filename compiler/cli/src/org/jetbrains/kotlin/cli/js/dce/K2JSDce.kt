@@ -119,7 +119,7 @@ class K2JSDce : CLITool<K2JSDceArguments>() {
     }
 
     private fun copyResource(resource: InputResource, targetFile: File) {
-        if (targetFile.exists() && resource.lastModified() == targetFile.lastModified()) return
+        if (targetFile.exists() && resource.lastModified() < targetFile.lastModified()) return
 
         targetFile.parentFile.mkdirs()
         resource.reader().use { input ->
