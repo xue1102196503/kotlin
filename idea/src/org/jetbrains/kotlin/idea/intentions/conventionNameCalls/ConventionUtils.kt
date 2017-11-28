@@ -17,14 +17,16 @@
 package org.jetbrains.kotlin.idea.intentions.conventionNameCalls
 
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.intentions.toResolvedCall
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-fun KtDotQualifiedExpression.isAnyEquals(): Boolean {
-    val resolvedCall = toResolvedCall(BodyResolveMode.PARTIAL) ?: return false
+fun KtExpression.isAnyEquals(): Boolean {
+    val context = analyze(BodyResolveMode.PARTIAL)
+    val resolvedCall = getResolvedCall(context) ?: return false
     return (resolvedCall.resultingDescriptor as? FunctionDescriptor)?.isAnyEquals() == true
 }
 
