@@ -1,0 +1,4 @@
+fun foo() {
+    println(someProperty * 2)
+    someProperty = 10
+}

@@ -1098,6 +1098,12 @@ public class InlineTestGenerated extends AbstractInlineTest {
                     doTest(fileName);
                 }
 
+                @TestMetadata("GetterAndDefaultSetter.kt")
+                public void testGetterAndDefaultSetter() throws Exception {
+                    String fileName = KotlinTestUtils.navigationMetadata("idea/testData/refactoring/inline/inlineVariableOrProperty/property/accessors/GetterAndDefaultSetter.kt");
+                    doTest(fileName);
+                }
+
                 @TestMetadata("GetterAndSetter.kt")
                 public void testGetterAndSetter() throws Exception {
                     String fileName = KotlinTestUtils.navigationMetadata("idea/testData/refactoring/inline/inlineVariableOrProperty/property/accessors/GetterAndSetter.kt");
