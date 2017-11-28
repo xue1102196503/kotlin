@@ -46,6 +46,9 @@ enum class ScopeKind {
     CLASSIFIER
 }
 
+// Must be used for lookups into entities whose content we can't track
+const val WILDCARD_LOOKUP_NAME = "<WILDCARD>"
+
 data class LookupInfo(
         val filePath: String,
         val position: Position,

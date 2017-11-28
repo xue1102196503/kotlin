@@ -53,6 +53,8 @@ object AndroidConst {
     val IGNORED_XML_WIDGET_TYPES = setOf("requestFocus", "merge", "tag", "check", "blink")
 
     val FQNAME_RESOLVE_PACKAGES = listOf("android.widget", "android.webkit", "android.view")
+
+    fun lookupPackageFqName(layoutName: String) = SYNTHETIC_PACKAGE + '.' + layoutName
 }
 
 fun androidIdToName(id: String): ResourceIdentifier? {

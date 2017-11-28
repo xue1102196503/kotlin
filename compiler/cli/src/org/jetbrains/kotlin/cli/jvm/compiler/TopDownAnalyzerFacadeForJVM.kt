@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.PackagePartProvider
 import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.impl.ModuleDependenciesImpl
-import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 import org.jetbrains.kotlin.frontend.java.di.createContainerForTopDownAnalyzerForJvm
 import org.jetbrains.kotlin.frontend.java.di.initJvmBuiltInsForTopDownAnalysis
 import org.jetbrains.kotlin.frontend.java.di.initialize
@@ -219,7 +218,7 @@ object TopDownAnalyzerFacadeForJVM {
 
         // TODO: consider putting extension package fragment providers into the dependency module
         PackageFragmentProviderExtension.getInstances(project).mapNotNullTo(additionalProviders) { extension ->
-            extension.getPackageFragmentProvider(project, module, storageManager, trace, null)
+            extension.getPackageFragmentProvider(project, module, storageManager, trace, null, lookupTracker)
         }
 
         // TODO: remove dependencyModule from friends
