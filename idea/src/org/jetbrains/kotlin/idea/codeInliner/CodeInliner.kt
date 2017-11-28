@@ -58,7 +58,7 @@ class CodeInliner<TCallElement : KtElement>(
     private val project = nameExpression.project
     private val psiFactory = KtPsiFactory(project)
 
-    fun doInline(): KtElement? {
+    fun doInline(inlineSetter: Boolean): KtElement? {
         val descriptor = resolvedCall.resultingDescriptor
         val file = nameExpression.containingKtFile
 
@@ -67,7 +67,7 @@ class CodeInliner<TCallElement : KtElement>(
                 ?.getAssignmentByLHS()
                 ?.takeIf { it.operationToken == KtTokens.EQ }
         val callableForParameters = if (assignment != null && descriptor is PropertyDescriptor)
-            descriptor.setter?.takeIf { it.hasBody() } ?: descriptor
+            descriptor.setter?.takeIf { inlineSetter && it.hasBody() } ?: descriptor
         else
             descriptor
         val elementToBeReplaced = when {
