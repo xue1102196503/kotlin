@@ -99,7 +99,7 @@ class SamAdapterFunctionsScope(
             for (function in type.memberScope.getContributedFunctions(name, location)) {
                 val extension = extensionForFunction(function.original)?.substituteForReceiverType(type)
                 if (extension != null) {
-                    recordSamLookupsForParameters(function, type, location)
+                    recordSamLookupsForParameters(function, location)
                     if (result == null) {
                         result = SmartList()
                     }
@@ -114,9 +114,9 @@ class SamAdapterFunctionsScope(
         }
     }
 
-    private fun recordSamLookupsForParameters(function: SimpleFunctionDescriptor, type: KotlinType, location: LookupLocation) {
+    private fun recordSamLookupsForParameters(function: FunctionDescriptor, location: LookupLocation) {
         for (valueParameter in function.valueParameters) {
-            recordSamLookupsToClassifier(type.constructor.declarationDescriptor ?: continue, location)
+            recordSamLookupsToClassifier(valueParameter.type.constructor.declarationDescriptor ?: continue, location)
         }
     }
 
@@ -147,7 +147,7 @@ class SamAdapterFunctionsScope(
     override fun getSyntheticExtensionProperties(receiverTypes: Collection<KotlinType>): Collection<PropertyDescriptor> = emptyList()
 
     override fun getSyntheticStaticFunctions(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
-        return getSamFunctions(scope.getContributedFunctions(name, location))
+        return getSamFunctions(scope.getContributedFunctions(name, location), location)
     }
 
     override fun getSyntheticConstructors(scope: ResolutionScope, name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
@@ -166,7 +166,7 @@ class SamAdapterFunctionsScope(
     }
 
     override fun getSyntheticStaticFunctions(scope: ResolutionScope): Collection<FunctionDescriptor> {
-        return getSamFunctions(scope.getContributedDescriptors(DescriptorKindFilter.FUNCTIONS))
+        return getSamFunctions(scope.getContributedDescriptors(DescriptorKindFilter.FUNCTIONS), location = null)
     }
 
     override fun getSyntheticConstructors(scope: ResolutionScope): Collection<FunctionDescriptor> {
@@ -194,11 +194,16 @@ class SamAdapterFunctionsScope(
         return samConstructorForJavaConstructor(constructor)
     }
 
-    private fun getSamFunctions(functions: Collection<DeclarationDescriptor>): List<SamAdapterDescriptor<JavaMethodDescriptor>> {
+    private fun getSamFunctions(
+            functions: Collection<DeclarationDescriptor>,
+            location: LookupLocation?
+    ): List<SamAdapterDescriptor<JavaMethodDescriptor>> {
         return functions.mapNotNull { function ->
             if (function !is JavaMethodDescriptor) return@mapNotNull null
             if (function.dispatchReceiverParameter != null) return@mapNotNull null // consider only statics
             if (!SingleAbstractMethodUtils.isSamAdapterNecessary(function)) return@mapNotNull null
+
+            location?.let { recordSamLookupsForParameters(function, it) }
 
             samAdapterForStaticFunction(function)
         }
