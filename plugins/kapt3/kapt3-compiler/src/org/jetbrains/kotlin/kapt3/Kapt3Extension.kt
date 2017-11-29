@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.kapt3
 
+import com.intellij.ide.ClassUtilCore
 import com.intellij.openapi.project.Project
 import com.sun.tools.javac.code.Flags
 import com.sun.tools.javac.tree.JCTree
@@ -89,10 +90,13 @@ class ClasspathBasedKapt3Extension(
             return super.analysisCompleted(project, module, bindingTrace, files)
         } finally {
             annotationProcessingClassLoader?.close()
+            ClassUtilCore.clearJarURLCache()
         }
     }
 
     override fun loadProcessors(): List<Processor> {
+        ClassUtilCore.clearJarURLCache()
+
         val classpath = annotationProcessingClasspath + compileClasspath
         val classLoader = URLClassLoader(classpath.map { it.toURI().toURL() }.toTypedArray())
         this.annotationProcessingClassLoader = classLoader
