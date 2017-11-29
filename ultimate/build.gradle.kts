@@ -35,6 +35,7 @@ dependencies {
     compile(project(":idea:idea-core")) { isTransitive = false }
     compile(project(":idea:ide-common")) { isTransitive = false }
     compile(project(":idea:idea-gradle")) { isTransitive = false }
+    compile(project(":plugins:kapt3-idea")) { isTransitive = false }
 
     compile(ideaUltimatePreloadedDeps("*.jar", subdir = "nodejs_plugin/NodeJS/lib"))
     compile(ideaUltimateSdkCoreDeps("annotations", "trove4j", "intellij-core"))
