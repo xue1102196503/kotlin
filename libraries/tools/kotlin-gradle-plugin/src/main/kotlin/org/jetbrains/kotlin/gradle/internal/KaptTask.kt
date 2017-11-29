@@ -34,6 +34,9 @@ open class KaptTask : ConventionTask(), CompilerArgumentAware<K2JVMCompilerArgum
     @get:OutputDirectory
     lateinit var destinationDir: File
 
+    @get:OutputDirectory
+    lateinit var kotlinSourcesDestinationDir: File
+
     override fun createCompilerArgs(): K2JVMCompilerArguments = K2JVMCompilerArguments()
 
     override fun setupCompilerArgs(args: K2JVMCompilerArguments, defaultsOnly: Boolean) {
@@ -70,6 +73,7 @@ open class KaptTask : ConventionTask(), CompilerArgumentAware<K2JVMCompilerArgum
          * (annotation processing is not incremental) */
         destinationDir.clearDirectory()
         classesDir.clearDirectory()
+        kotlinSourcesDestinationDir.clearDirectory()
 
         val sourceRootsFromKotlin = kotlinCompileTask.sourceRootsContainer.sourceRoots
         val rawSourceRoots = FilteringSourceRootsContainer(sourceRootsFromKotlin, { !isInsideDestinationDirs(it) })
