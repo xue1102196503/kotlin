@@ -304,7 +304,10 @@ class Kapt3KotlinGradleSubplugin : KotlinGradleSubplugin<KotlinCompile> {
             registerGeneratedJavaSource(kaptTask, javaCompile)
         }
 
+        kaptTask.kaptClasspath = kaptClasspath
+
         buildAndAddOptionsTo(kaptTask.pluginOptions, aptMode = "apt")
+
         return kaptTask
     }
 
@@ -322,6 +325,7 @@ class Kapt3KotlinGradleSubplugin : KotlinGradleSubplugin<KotlinCompile> {
         kaptTask.generatedSourcesDir = sourcesOutputDir
         mapKotlinTaskProperties(project, kaptTask)
 
+        kaptTask.kaptClasspath = kaptClasspath
         buildAndAddOptionsTo(kaptTask.pluginOptions, aptMode = "stubs")
 
         return kaptTask
