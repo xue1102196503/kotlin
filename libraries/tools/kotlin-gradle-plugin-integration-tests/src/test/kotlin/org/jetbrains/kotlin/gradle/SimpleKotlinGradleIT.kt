@@ -19,7 +19,10 @@ class SimpleKotlinGradleIT : BaseGradleIT() {
         project.build("compileDeployKotlin", "build") {
             assertSuccessful()
             assertContains("Finished executing kotlin compiler using daemon strategy")
-            assertReportExists("build/reports/tests/classes/demo.TestSource.html")
+            assertTrue {
+                fileInWorkingDir("build/reports/tests/classes/demo.TestSource.html").exists() ||
+                fileInWorkingDir("build/reports/tests/test/classes/demo.TestSource.html").exists()
+            }
             assertContains(":compileKotlin", ":compileTestKotlin", ":compileDeployKotlin")
         }
 
