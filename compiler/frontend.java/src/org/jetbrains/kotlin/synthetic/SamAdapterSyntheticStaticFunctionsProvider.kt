@@ -30,8 +30,8 @@ import org.jetbrains.kotlin.storage.StorageManager
 private class SamAdapterSyntheticStaticFunctionsScope(
         storageManager: StorageManager,
         private val samResolver: SamConversionResolver,
-        wrappedScope: ResolutionScope
-) : SyntheticResolutionScope(storageManager, wrappedScope) {
+        override val wrappedScope: ResolutionScope
+) : SyntheticResolutionScope() {
     val functions = storageManager.createMemoizedFunction<Name, List<FunctionDescriptor>> {
         doGetFunctions(it)
     }
@@ -41,7 +41,8 @@ private class SamAdapterSyntheticStaticFunctionsScope(
     }
 
     private fun doGetFunctions(name: Name) =
-            getContributedFunctionsShadowOriginal(name, NoLookupLocation.FROM_SYNTHETIC_SCOPE).mapNotNull { wrapFunction(it) }
+            super.getContributedFunctions(name, NoLookupLocation.FROM_SYNTHETIC_SCOPE)
+                    .mapNotNull { wrapFunction(it) }
 
     private fun wrapFunction(function: DeclarationDescriptor): FunctionDescriptor? {
         if (function !is JavaMethodDescriptor) return null
@@ -52,14 +53,21 @@ private class SamAdapterSyntheticStaticFunctionsScope(
     }
 
     private fun doGetDescriptors(): List<FunctionDescriptor> =
-            getContributedDescriptorsShadowOriginal(DescriptorKindFilter.FUNCTIONS).mapNotNull { wrapFunction(it) }
+            super.getContributedDescriptors(DescriptorKindFilter.FUNCTIONS, MemberScope.ALL_NAME_FILTER)
+                    .mapNotNull { wrapFunction(it) }
 
-    override fun getContributedFunctions(name: Name, location: LookupLocation): List<FunctionDescriptor> {
-        return functions(name) + super.getContributedFunctions(name, location)
+    override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
+        return shadowOriginalFunctions(name, location) {
+            functions(name)
+        }
     }
 
-    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean) =
-            descriptors() + super.getContributedDescriptors(kindFilter, nameFilter)
+    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> {
+        return shadowOriginalDescriptors(kindFilter, nameFilter) { filter ->
+            if (filter != DescriptorKindFilter.FUNCTIONS) emptyList()
+            else descriptors()
+        }
+    }
 }
 
 class SamAdapterSyntheticStaticFunctionsProvider(

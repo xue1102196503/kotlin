@@ -40,7 +40,7 @@ fun canBePropertyAccessor(identifier: String): Boolean {
     return identifier.startsWith("get") || identifier.startsWith("is") || identifier.startsWith("set")
 }
 
-interface SyntheticJavaPropertyDescriptor : PropertyDescriptor {
+interface SyntheticJavaPropertyDescriptor : SyntheticPropertyDescriptor {
     val getMethod: FunctionDescriptor
     val setMethod: FunctionDescriptor?
 
@@ -52,10 +52,13 @@ interface SyntheticJavaPropertyDescriptor : PropertyDescriptor {
             if (!canBePropertyAccessor(identifier)) return null  // optimization
 
             val classDescriptorOwner = getterOrSetter.containingDeclaration as? ClassDescriptor ?: return null
-
             val originalGetterOrSetter = getterOrSetter.original
-            return syntheticScopes.collectSyntheticExtensionProperties(listOf(classDescriptorOwner.defaultType))
-                    .filterIsInstance<SyntheticJavaPropertyDescriptor>()
+
+            val scope = syntheticScopes.provideSyntheticScope(
+                    classDescriptorOwner.defaultType.memberScope,
+                    SyntheticScopesMetadata(type = classDescriptorOwner.defaultType, needExtensionProperties = true)
+            )
+            return scope.getContributedDescriptors(DescriptorKindFilter.VARIABLES).filterIsInstance<SyntheticJavaPropertyDescriptor>()
                     .firstOrNull { originalGetterOrSetter == it.getMethod || originalGetterOrSetter == it.setMethod }
         }
 
@@ -76,22 +79,23 @@ interface SyntheticJavaPropertyDescriptor : PropertyDescriptor {
 class JavaSyntheticPropertiesScope(
         type: KotlinType,
         storageManager: StorageManager,
-        wrappedScope: ResolutionScope
-) : SyntheticResolutionScope(storageManager, wrappedScope) {
+        override val wrappedScope: ResolutionScope
+) : SyntheticResolutionScope() {
     private val ownerClass = type.constructor.declarationDescriptor as ClassDescriptor
-    private val properties = storageManager.createMemoizedFunctionWithNullableValues<Name, PropertyDescriptor> {
+    private val properties = storageManager.createMemoizedFunctionWithNullableValues<Name, VariableDescriptor> {
         doGetProperty(it)
     }
     private val descriptors = storageManager.createLazyValue {
         doGetDescriptors()
     }
 
-    private fun doGetDescriptors(): List<PropertyDescriptor> = getContributedDescriptorsShadowOriginal(DescriptorKindFilter.FUNCTIONS)
-            .filterIsInstance<FunctionDescriptor>()
-            .mapNotNull {
-                val propertyName = SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(it.name) ?: return@mapNotNull null
-                getContributedVariables(propertyName, NoLookupLocation.FROM_SYNTHETIC_SCOPE).singleOrNull()
-            }
+    private fun doGetDescriptors(): List<VariableDescriptor> =
+            super.getContributedDescriptors(DescriptorKindFilter.FUNCTIONS, MemberScope.ALL_NAME_FILTER)
+                    .filterIsInstance<FunctionDescriptor>()
+                    .mapNotNull {
+                        val propertyName = SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(it.name) ?: return@mapNotNull null
+                        getContributedVariables(propertyName, NoLookupLocation.FROM_SYNTHETIC_SCOPE).singleOrNull()
+                    }
 
     private fun doGetProperty(name: Name): PropertyDescriptor? {
         if (name.isSpecial) return null
@@ -102,11 +106,11 @@ class JavaSyntheticPropertiesScope(
 
         val possibleGetters = possibleGetMethodNames(name)
         val getter = possibleGetters
-                             .flatMap { getContributedFunctionsShadowOriginal(it, NoLookupLocation.FROM_SYNTHETIC_SCOPE) }
+                             .flatMap { super.getContributedFunctions(it, NoLookupLocation.FROM_SYNTHETIC_SCOPE) }
                              .singleOrNull { it.hasJavaOriginInHierarchy() && isGoodGetMethod(it) } ?: return null
 
         val setterName = setMethodName(getter.name)
-        val setter = getContributedFunctionsShadowOriginal(setterName, NoLookupLocation.FROM_SYNTHETIC_SCOPE)
+        val setter = super.getContributedFunctions(setterName, NoLookupLocation.FROM_SYNTHETIC_SCOPE)
                 .singleOrNull { isGoodSetMethod(it, getter) }
 
         val type = getter.returnType!!
@@ -163,13 +167,19 @@ class JavaSyntheticPropertiesScope(
         return Name.identifier("set" + identifier.removePrefix(prefix))
     }
 
-    override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> {
+    override fun getContributedVariables(name: Name, location: LookupLocation): Collection<VariableDescriptor> {
         recordLookup(name, location)
-        return listOfNotNull(properties(name)) + super.getContributedVariables(name, location).filterIsInstance<PropertyDescriptor>()
+        return shadowOriginalVariables(name, location) {
+            listOfNotNull(properties(name))
+        }
     }
 
-    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean) =
-            descriptors() + super.getContributedDescriptors(kindFilter, nameFilter)
+    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> {
+        return shadowOriginalDescriptors(kindFilter, nameFilter) { filter ->
+            if (filter == DescriptorKindFilter.VARIABLES) descriptors()
+            else emptyList()
+        }
+    }
 
     private class MyPropertyDescriptor(
             containingDeclaration: DeclarationDescriptor,
@@ -263,14 +273,14 @@ class JavaSyntheticPropertiesScope(
             }
         }
 
-        override fun substitute(originalSubstitutor: TypeSubstitutor): PropertyDescriptor? {
-            val descriptor = super.substitute(originalSubstitutor) as MyPropertyDescriptor? ?: return null
+        override fun substitute(substitutor: TypeSubstitutor): PropertyDescriptor? {
+            val descriptor = super.substitute(substitutor) as MyPropertyDescriptor? ?: return null
             if (descriptor == this) return descriptor
 
             val classTypeParameters = (getMethod.containingDeclaration as ClassDescriptor).typeConstructor.parameters
             val substitutionMap = HashMap<TypeConstructor, TypeProjection>()
             for ((typeParameter, classTypeParameter) in typeParameters.zip(classTypeParameters)) {
-                val typeProjection = originalSubstitutor.substitution[typeParameter.defaultType] ?: continue
+                val typeProjection = substitutor.substitution[typeParameter.defaultType] ?: continue
                 substitutionMap[classTypeParameter.typeConstructor] = typeProjection
 
             }
@@ -294,6 +304,7 @@ class JavaSyntheticPropertiesProvider(private val storageManager: StorageManager
     override fun provideSyntheticScope(scope: ResolutionScope, metadata: SyntheticScopesMetadata): ResolutionScope {
         if (!metadata.needExtensionProperties) return scope
         val type = metadata.type ?: error("Synthetic properties provider requires type")
+        if (type.constructor.declarationDescriptor !is ClassDescriptor) return scope
         return makeSynthetic(Pair(scope, type))
     }
 }

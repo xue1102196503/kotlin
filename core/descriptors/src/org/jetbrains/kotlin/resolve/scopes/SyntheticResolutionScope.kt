@@ -22,118 +22,107 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.DescriptorEquivalenceForOverrides
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter.Companion.FUNCTIONS_MASK
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter.Companion.NON_SINGLETON_CLASSIFIERS_MASK
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter.Companion.PACKAGES_MASK
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter.Companion.SINGLETON_CLASSIFIERS_MASK
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter.Companion.TYPE_ALIASES_MASK
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter.Companion.VARIABLES_MASK
-import org.jetbrains.kotlin.storage.StorageManager
 
 /**
  * A chain of synthetic scope which enhance [ResolutionScope].
  * Use [SyntheticScopeProvider] to retrieve one.
  */
-abstract class SyntheticResolutionScope(
-        storageManager: StorageManager,
-        private val wrappedScope: ResolutionScope
-) : ResolutionScope {
-    private val originalScope = storageManager.createLazyValue {
-        doGetOriginal()
-    }
-
-    private fun doGetOriginal(): ResolutionScope {
-        var result = wrappedScope
-        while (result is SyntheticResolutionScope) {
-            result = result.wrappedScope
-        }
-        return result
-    }
+abstract class SyntheticResolutionScope : ResolutionScope {
+    abstract val wrappedScope: ResolutionScope
 
     override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? =
-            getSyntheticContributedClassifier(name, location)
-
-    private fun getSyntheticContributedClassifier(name: Name, location: LookupLocation) =
-            (wrappedScope as? SyntheticResolutionScope)?.getContributedClassifier(name, location)
+            wrappedScope.getContributedClassifier(name, location)
 
     override fun getContributedVariables(name: Name, location: LookupLocation): Collection<VariableDescriptor> =
-            getSyntheticContributedVariables(name, location)
-
-    private fun getSyntheticContributedVariables(name: Name, location: LookupLocation) =
-            (wrappedScope as? SyntheticResolutionScope)?.getContributedVariables(name, location) ?: emptyList()
+            wrappedScope.getContributedVariables(name, location)
 
     override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> =
-            getSyntheticContributedFunctions(name, location)
-
-    private fun getSyntheticContributedFunctions(name: Name, location: LookupLocation) =
-            (wrappedScope as? SyntheticResolutionScope)?.getContributedFunctions(name, location) ?: emptyList()
+            wrappedScope.getContributedFunctions(name, location)
 
     override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> =
-            getSyntheticContributedDescriptors(kindFilter, nameFilter)
+            wrappedScope.getContributedDescriptors(kindFilter, nameFilter)
 
-    private fun getSyntheticContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean) =
-            (wrappedScope as? SyntheticResolutionScope)?.getContributedDescriptors(kindFilter, nameFilter) ?: emptyList()
+    override fun recordLookup(name: Name, location: LookupLocation) =
+            wrappedScope.recordLookup(name, location)
+}
 
-    override fun recordLookup(name: Name, location: LookupLocation) {
-        originalScope().recordLookup(name, location)
+// Replace the symbols from wrappedScope with newly created symbols.
+// For example, if [wrappedScope.getContributedVariables] returns "private foo: Int"
+// and [newSymbols] returns another "public foo: Int", as
+// SyntheticPropertiesScope does, the resulting symbol will be "public foo: Int" as
+// original "private foo: Int" will be shadowed.
+fun SyntheticResolutionScope.shadowOriginalClassifier(
+        name: Name,
+        location: LookupLocation,
+        newClassifier: () -> ClassifierDescriptor?
+): ClassifierDescriptor? = newClassifier() ?: wrappedScope.getContributedClassifier(name, location)
+
+fun SyntheticResolutionScope.shadowOriginalVariables(
+        name: Name,
+        location: LookupLocation,
+        newVariables: () -> Collection<VariableDescriptor>
+): Collection<VariableDescriptor> {
+    val synthetics = newVariables()
+    val syntheticNames = synthetics.map { it.name }
+    val original = wrappedScope.getContributedVariables(name, location)
+    val notShadowed = original.filterNot { it.name in syntheticNames }
+    return synthetics + notShadowed
+}
+
+fun SyntheticResolutionScope.shadowOriginalFunctions(
+        name: Name,
+        location: LookupLocation,
+        newFunctions: () -> Collection<FunctionDescriptor>
+): Collection<FunctionDescriptor> {
+    val synthetics = newFunctions()
+    return synthetics + wrappedScope.getContributedFunctions(name, location).filterNot { original ->
+        synthetics.any { synthetic ->
+            DescriptorEquivalenceForOverrides.areCallableDescriptorsEquivalent(original, synthetic)
+        }
     }
+}
 
-    // If the synthetic scopes chain contains the classifier, it shadows original. Otherwise, return original classifier.
-    protected fun getContributedClassisfierShadowOriginal(name: Name, location: LookupLocation): ClassifierDescriptor? {
-        val synthetic = getSyntheticContributedClassifier(name, location)
-        val original = originalScope().getContributedClassifier(name, location)
-        return synthetic ?: original
-    }
-
-    protected fun getContributedVariablesShadowOriginal(name: Name, location: LookupLocation): Collection<VariableDescriptor> {
-        val synthetic = getSyntheticContributedVariables(name, location)
-        return if (synthetic.isNotEmpty()) synthetic
-        else originalScope().getContributedVariables(name, location)
-    }
-
-    protected fun getContributedFunctionsShadowOriginal(name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
-        val synthetic = getSyntheticContributedFunctions(name, location)
-        return if (synthetic.isNotEmpty()) synthetic
-        else originalScope().getContributedFunctions(name, location)
-    }
-
-    protected fun getContributedDescriptorsShadowOriginal(
-            kindFilter: DescriptorKindFilter = DescriptorKindFilter.ALL,
-            nameFilter: (Name) -> Boolean = MemberScope.ALL_NAME_FILTER
+fun SyntheticResolutionScope.shadowOriginalDescriptors(
+        kindFilter: DescriptorKindFilter,
+        nameFilter: (Name) -> Boolean,
+        newDescriptors: (DescriptorKindFilter) -> Collection<DeclarationDescriptor>
+): Collection<DeclarationDescriptor> {
+    fun doShadow(
+            kindFilter: DescriptorKindFilter,
+            nameFilter: (Name) -> Boolean,
+            newDescriptors: (DescriptorKindFilter) -> Collection<DeclarationDescriptor>
     ): Collection<DeclarationDescriptor> {
-        val res = hashSetOf<DeclarationDescriptor>()
-        if (kindFilter.kindMask and NON_SINGLETON_CLASSIFIERS_MASK != 0) {
-            res.addAll(shadowDescriptors(DescriptorKindFilter.NON_SINGLETON_CLASSIFIERS, nameFilter))
-        }
-        if (kindFilter.kindMask and SINGLETON_CLASSIFIERS_MASK != 0) {
-            res.addAll(shadowDescriptors(DescriptorKindFilter.SINGLETON_CLASSIFIERS, nameFilter))
-        }
-        if (kindFilter.kindMask and TYPE_ALIASES_MASK != 0) {
-            res.addAll(shadowDescriptors(DescriptorKindFilter.TYPE_ALIASES, nameFilter))
-        }
-        if (kindFilter.kindMask and PACKAGES_MASK != 0) {
-            res.addAll(shadowDescriptors(DescriptorKindFilter.PACKAGES, nameFilter))
-        }
-        if (kindFilter.kindMask and FUNCTIONS_MASK != 0) {
-            res.addAll(shadowDescriptors(DescriptorKindFilter.FUNCTIONS, nameFilter))
-        }
-        if (kindFilter.kindMask and VARIABLES_MASK != 0) {
-            res.addAll(shadowDescriptors(DescriptorKindFilter.VARIABLES, nameFilter))
-        }
-        return res
+        val synthetics = newDescriptors(kindFilter)
+        val syntheticNames = synthetics.map { it.name }
+        val original = wrappedScope.getContributedDescriptors(kindFilter, nameFilter)
+        return synthetics + original.filterNot { it.name in syntheticNames }
     }
 
-    private fun shadowDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> {
-        val synthetic = getSyntheticContributedDescriptors(kindFilter, nameFilter)
-        val syntheticNames = synthetic.map { it.name }
-        val original = originalScope().getContributedDescriptors(kindFilter, nameFilter).filterNot { it.name in syntheticNames }
-        return synthetic + original
+    val res = hashSetOf<DeclarationDescriptor>()
+    if (kindFilter.acceptsKinds(NON_SINGLETON_CLASSIFIERS_MASK)) {
+        res.addAll(doShadow(DescriptorKindFilter.NON_SINGLETON_CLASSIFIERS, nameFilter, newDescriptors))
     }
-
-    object Empty : ResolutionScope {
-        override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? = null
-        override fun getContributedVariables(name: Name, location: LookupLocation): Collection<VariableDescriptor> = emptyList()
-        override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> = emptyList()
-        override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> = emptyList()
+    if (kindFilter.acceptsKinds(SINGLETON_CLASSIFIERS_MASK)) {
+        res.addAll(doShadow(DescriptorKindFilter.SINGLETON_CLASSIFIERS, nameFilter, newDescriptors))
     }
+    if (kindFilter.acceptsKinds(TYPE_ALIASES_MASK)) {
+        res.addAll(doShadow(DescriptorKindFilter.TYPE_ALIASES, nameFilter, newDescriptors))
+    }
+    if (kindFilter.acceptsKinds(PACKAGES_MASK)) {
+        res.addAll(doShadow(DescriptorKindFilter.PACKAGES, nameFilter, newDescriptors))
+    }
+    if (kindFilter.acceptsKinds(FUNCTIONS_MASK)) {
+        res.addAll(doShadow(DescriptorKindFilter.FUNCTIONS, nameFilter, newDescriptors))
+    }
+    if (kindFilter.acceptsKinds(VARIABLES_MASK)) {
+        res.addAll(doShadow(DescriptorKindFilter.VARIABLES, nameFilter, newDescriptors))
+    }
+    return res
 }

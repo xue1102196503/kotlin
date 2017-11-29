@@ -33,8 +33,8 @@ import org.jetbrains.kotlin.storage.StorageManager
 private class SamAdapterSyntheticConstructorsScope(
         private val storageManager: StorageManager,
         private val samResolver: SamConversionResolver,
-        wrappedScope: ResolutionScope
-) : SyntheticResolutionScope(storageManager, wrappedScope) {
+        override val wrappedScope: ResolutionScope
+) : SyntheticResolutionScope() {
     private val samConstructorForClassifier =
             storageManager.createMemoizedFunction<JavaClassDescriptor, SamConstructorDescriptor> { classifier ->
                 SingleAbstractMethodUtils.createSamConstructorFunction(classifier.containingDeclaration, classifier, samResolver)
@@ -51,15 +51,22 @@ private class SamAdapterSyntheticConstructorsScope(
             }
 
     override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
-        val classifier = getContributedClassisfierShadowOriginal(name, location) ?: return super.getContributedFunctions(name, location)
-        return getAllSamConstructors(classifier) + super.getContributedFunctions(name, location)
+        return shadowOriginalFunctions(name, location) {
+            val classifier = getContributedClassifier(name, location) ?: return@shadowOriginalFunctions emptyList()
+            getAllSamConstructors(classifier)
+        }
     }
 
     override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> {
-        val contributedDescriptors = getContributedDescriptorsShadowOriginal(DescriptorKindFilter.CLASSIFIERS)
-        val constructor = (contributedDescriptors.singleOrNull() as? ConstructorDescriptor)
-                          ?: return processClassifierDescriptors(contributedDescriptors, kindFilter, nameFilter)
-        return listOfNotNull(getSyntheticConstructor(constructor)) + super.getContributedDescriptors(kindFilter, nameFilter)
+        return shadowOriginalDescriptors(kindFilter, nameFilter) { filter ->
+            if (filter.kindMask and DescriptorKindFilter.CLASSIFIERS_MASK == 0) emptyList()
+            else {
+                val contributedDescriptors = super.getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS, MemberScope.ALL_NAME_FILTER)
+                val constructor = (contributedDescriptors.singleOrNull() as? ConstructorDescriptor)
+                                  ?: return@shadowOriginalDescriptors processClassifierDescriptors(contributedDescriptors, kindFilter, nameFilter)
+                listOfNotNull(getSyntheticConstructor(constructor))
+            }
+        }
     }
 
     private fun processClassifierDescriptors(contributedDescriptors: Collection<DeclarationDescriptor>, kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): List<DeclarationDescriptor> {

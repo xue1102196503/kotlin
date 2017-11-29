@@ -42,8 +42,8 @@ private class SamAdapterFunctionsScope(
         private val samResolver: SamConversionResolver,
         private val deprecationResolver: DeprecationResolver,
         private val type: KotlinType,
-        wrappedScope: ResolutionScope
-) : SyntheticResolutionScope(storageManager, wrappedScope) {
+        override val wrappedScope: ResolutionScope
+) : SyntheticResolutionScope() {
     private val functions = storageManager.createMemoizedFunction<Name, List<SimpleFunctionDescriptor>> {
         doGetFunctions(it)
     }
@@ -51,12 +51,12 @@ private class SamAdapterFunctionsScope(
         doGetDescriptors()
     }
 
-    private fun doGetDescriptors() = getContributedDescriptorsShadowOriginal(DescriptorKindFilter.FUNCTIONS)
+    private fun doGetDescriptors() = super.getContributedDescriptors(DescriptorKindFilter.FUNCTIONS, MemberScope.ALL_NAME_FILTER)
             .filterIsInstance<FunctionDescriptor>()
             .flatMap { getContributedFunctions(it.name, NoLookupLocation.FROM_SYNTHETIC_SCOPE) }
 
     private fun doGetFunctions(name: Name) =
-            getContributedFunctionsShadowOriginal(name, NoLookupLocation.FROM_SYNTHETIC_SCOPE).mapNotNull {
+            super.getContributedFunctions(name, NoLookupLocation.FROM_SYNTHETIC_SCOPE).mapNotNull {
                 wrapFunction(it.original)?.substituteForReceiverType(type) as? SimpleFunctionDescriptor
             }
 
@@ -69,11 +69,18 @@ private class SamAdapterFunctionsScope(
         return MyFunctionDescriptor.create(function, samResolver)
     }
 
-    override fun getContributedFunctions(name: Name, location: LookupLocation) =
-            functions(name) + super.getContributedFunctions(name, location)
+    override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> {
+        return shadowOriginalFunctions(name, location) {
+            functions(name)
+        }
+    }
 
-    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean) =
-            descriptors() + super.getContributedDescriptors(kindFilter, nameFilter)
+    override fun getContributedDescriptors(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): Collection<DeclarationDescriptor> {
+        return shadowOriginalDescriptors(kindFilter, nameFilter) { filter ->
+            if (filter != DescriptorKindFilter.FUNCTIONS) emptyList()
+            else descriptors()
+        }
+    }
 
     private class MyFunctionDescriptor(
             containingDeclaration: DeclarationDescriptor,
