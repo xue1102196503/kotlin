@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.codegen.context.*;
 import org.jetbrains.kotlin.codegen.coroutines.CoroutineCodegenForLambda;
 import org.jetbrains.kotlin.codegen.coroutines.CoroutineCodegenUtilKt;
 import org.jetbrains.kotlin.codegen.coroutines.ResolvedCallWithRealDescriptor;
+import org.jetbrains.kotlin.codegen.extensions.CompatExpressionCodegenExtension;
 import org.jetbrains.kotlin.codegen.extensions.ExpressionCodegenExtension;
 import org.jetbrains.kotlin.codegen.inline.*;
 import org.jetbrains.kotlin.codegen.intrinsics.*;
@@ -2180,7 +2181,9 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
 
         fd = context.getAccessorForSuperCallIfNeeded(fd, superCallTarget, state);
 
-        Collection<ExpressionCodegenExtension> codegenExtensions = ExpressionCodegenExtension.Companion.getInstances(state.getProject());
+        Collection<ExpressionCodegenExtension> codegenExtensions =
+                new ArrayList<>(ExpressionCodegenExtension.Companion.getInstances(state.getProject()));
+        codegenExtensions.add(CompatExpressionCodegenExtension.INSTANCE);
         if (!codegenExtensions.isEmpty()) {
             ExpressionCodegenExtension.Context context = new ExpressionCodegenExtension.Context(this, typeMapper, v);
             for (ExpressionCodegenExtension extension : codegenExtensions) {

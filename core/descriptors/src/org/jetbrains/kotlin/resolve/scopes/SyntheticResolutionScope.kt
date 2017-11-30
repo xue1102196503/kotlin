@@ -84,7 +84,11 @@ fun SyntheticResolutionScope.shadowOriginalFunctions(
     val synthetics = newFunctions()
     return synthetics + wrappedScope.getContributedFunctions(name, location).filterNot { original ->
         synthetics.any { synthetic ->
-            DescriptorEquivalenceForOverrides.areCallableDescriptorsEquivalent(original, synthetic)
+            DescriptorEquivalenceForOverrides.areCallableDescriptorsEquivalent(
+                    original,
+                    synthetic,
+                    ignoreContainingDeclaration = true
+            )
         }
     }
 }

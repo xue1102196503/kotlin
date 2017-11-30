@@ -47,10 +47,11 @@ object DescriptorEquivalenceForOverrides {
     private fun areTypeParametersEquivalent(
             a: TypeParameterDescriptor,
             b: TypeParameterDescriptor,
+            ignoreContainingDeclaration: Boolean = false,
             equivalentCallables: (DeclarationDescriptor?, DeclarationDescriptor?) -> Boolean = { _, _ -> false}
     ): Boolean {
         if (a == b) return true
-        if (a.containingDeclaration == b.containingDeclaration) return false
+        if (!ignoreContainingDeclaration && a.containingDeclaration == b.containingDeclaration) return false
 
         if (!ownersEquivalent(a, b, equivalentCallables)) return false
 
@@ -60,11 +61,12 @@ object DescriptorEquivalenceForOverrides {
     fun areCallableDescriptorsEquivalent(
             a: CallableDescriptor,
             b: CallableDescriptor,
-            ignoreReturnType: Boolean = false
+            ignoreReturnType: Boolean = false,
+            ignoreContainingDeclaration: Boolean = false
     ): Boolean {
         if (a == b) return true
         if (a.name != b.name) return false
-        if (a.containingDeclaration == b.containingDeclaration) return false
+        if (!ignoreContainingDeclaration && a.containingDeclaration == b.containingDeclaration) return false
 
         // Distinct locals are not equivalent
         if (DescriptorUtils.isLocal(a) || DescriptorUtils.isLocal(b)) return false
@@ -80,7 +82,7 @@ object DescriptorEquivalenceForOverrides {
 
             if (d1 !is TypeParameterDescriptor || d2 !is TypeParameterDescriptor) return@eq false
 
-            areTypeParametersEquivalent(d1, d2, {x, y -> x == a && y == b})
+            areTypeParametersEquivalent(d1, d2, ignoreContainingDeclaration, {x, y -> x == a && y == b})
         }
 
         return overridingUtil.isOverridableBy(a, b, null, !ignoreReturnType).result == OverrideCompatibilityInfo.Result.OVERRIDABLE

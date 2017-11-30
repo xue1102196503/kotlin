@@ -171,12 +171,13 @@ private class SamAdapterFunctionsScope(
         val containingClass = containingDeclaration as? ClassDescriptor ?: return null
         val correspondingSupertype = findCorrespondingSupertype(type, containingClass.defaultType) ?: return null
 
-        return substitute(
+        val result = substitute(
                 TypeConstructorSubstitution
                         .create(correspondingSupertype)
                         .wrapWithCapturingSubstitution(needApproximation = true)
                         .buildSubstitutor()
         )
+        return result
     }
 }
 
